@@ -213,7 +213,7 @@ export default function CreateDonation() {
                   name="weightUnit"
                   value={formData.weightUnit}
                   onChange={handleInputChange}
-                  className="nb-input p-4 w-20"
+                  className="nb-input p-4 w-20 appearance-none text-center cursor-pointer"
                 >
                   <option value="kg">kg</option>
                   <option value="lbs">lbs</option>
@@ -232,7 +232,8 @@ export default function CreateDonation() {
               min={new Date().toISOString().split("T")[0]}
               value={formData.expiryDate}
               onChange={handleInputChange}
-              className="nb-input p-4 w-full"
+              onClick={(e) => e.currentTarget.showPicker()}
+              className="nb-input p-4 w-full cursor-pointer"
             />
           </div>
         </div>
