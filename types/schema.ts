@@ -7,12 +7,30 @@ export interface UserProfile {
   email: string;
   displayName: string;
   role: UserRole;
+  phoneNumber?: string;
+  onboardingCompleted?: boolean;
+  
+  // Donor specific
+  organizationName?: string;
+  businessType?: 'grocery' | 'restaurant' | 'farm' | 'bakery' | 'cafe' | 'other';
+  pickupAddress?: string;
+  accessInstructions?: string;
+
+  // Volunteer specific
+  vehicleType?: 'sedan' | 'suv' | 'van' | 'truck' | 'bicycle' | 'foot';
+  baseLocation?: string; // City/Area
+  availability?: string[]; // e.g. ['weekdays_morning', 'weekends']
+
+  // Food Bank specific
+  dropoffAddress?: string;
+  receivingHours?: string;
+  storageCapabilities?: ('fridge' | 'freezer' | 'dry_storage')[];
+  
   location?: {
     lat: number;
     lng: number;
     address: string;
   };
-  phoneNumber?: string;
 }
 
 export interface Donation {
