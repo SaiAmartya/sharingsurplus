@@ -6,9 +6,6 @@ export default function VolunteerRoutes() {
        {/* Header */}
        <div className="flex justify-between items-end mb-8">
             <div>
-                <Link href="/" className="text-slate-400 text-xs font-bold uppercase mb-1 tracking-wide hover:text-nb-ink transition-colors">
-                  <i className="fas fa-arrow-left mr-1"></i> Back
-                </Link>
                 <h2 className="font-display text-3xl font-bold text-nb-teal flex items-center">
                     Online <span className="ml-2 w-3 h-3 bg-nb-teal rounded-full animate-pulse"></span>
                 </h2>

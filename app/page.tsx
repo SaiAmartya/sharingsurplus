@@ -1,6 +1,43 @@
-import Link from "next/link";
+"use client";
+
+import { useEffect } from "react";
+import { auth, googleProvider } from "@/lib/firebase";
+import { signInWithPopup } from "firebase/auth";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/AuthContext";
+import { getRoleRoute } from "@/lib/routes";
 
 export default function Home() {
+  const { user, profile, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && user) {
+      if (!profile || !profile.onboardingCompleted) {
+        router.push('/onboarding');
+      } else {
+        // Redirect based on role
+        router.push(getRoleRoute(profile.role));
+      }
+    }
+  }, [user, profile, loading, router]);
+
+  const handleLogin = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+      console.error("Error signing in", error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-nb-bg bg-dots flex flex-col items-center justify-center p-6 relative overflow-hidden">
+        <div className="animate-pulse text-nb-ink font-bold text-xl">Loading...</div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-nb-bg bg-dots flex flex-col items-center justify-center p-6 relative overflow-hidden">
       {/* Decor */}
@@ -11,64 +48,24 @@ export default function Home() {
         
         <div className="space-y-2">
           <h1 className="font-display text-5xl font-bold text-nb-ink leading-tight">
-            Share <br/><span className="text-nb-blue">Surplus.</span>
+            Shurplus
           </h1>
           <p className="text-slate-500 text-lg font-medium">
             Connecting food distributors with communities in need.
           </p>
         </div>
 
-        <div className="grid gap-4">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Select your role</p>
-          
-          <Link href="/donor" className="group relative">
-            <div className="absolute inset-0 bg-nb-ink rounded-2xl translate-y-2 group-hover:translate-y-3 transition-transform"></div>
-            <div className="relative bg-white border-2 border-nb-ink rounded-2xl p-5 flex items-center justify-between group-hover:-translate-y-1 transition-transform">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-nb-blue-soft text-nb-blue rounded-xl flex items-center justify-center text-xl mr-4">
-                  <i className="fas fa-store"></i>
-                </div>
-                <div className="text-left">
-                  <h3 className="font-display font-bold text-lg text-nb-ink">Distributor</h3>
-                  <p className="text-xs text-slate-500 font-bold uppercase">Donate Food</p>
-                </div>
-              </div>
-              <i className="fas fa-arrow-right text-slate-300 group-hover:text-nb-ink transition-colors"></i>
-            </div>
-          </Link>
-
-          <Link href="/volunteer" className="group relative">
-            <div className="absolute inset-0 bg-nb-teal rounded-2xl translate-y-2 group-hover:translate-y-3 transition-transform opacity-20"></div>
-            <div className="relative bg-white border-2 border-slate-200 hover:border-nb-teal rounded-2xl p-5 flex items-center justify-between group-hover:-translate-y-1 transition-transform">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-nb-teal-soft text-nb-teal rounded-xl flex items-center justify-center text-xl mr-4">
-                  <i className="fas fa-truck"></i>
-                </div>
-                <div className="text-left">
-                  <h3 className="font-display font-bold text-lg text-nb-ink">Volunteer</h3>
-                  <p className="text-xs text-slate-500 font-bold uppercase">Transport</p>
-                </div>
-              </div>
-              <i className="fas fa-arrow-right text-slate-300 group-hover:text-nb-teal transition-colors"></i>
-            </div>
-          </Link>
-
-          <Link href="/charity/dashboard" className="group relative">
-            <div className="absolute inset-0 bg-nb-orange rounded-2xl translate-y-2 group-hover:translate-y-3 transition-transform opacity-20"></div>
-            <div className="relative bg-white border-2 border-slate-200 hover:border-nb-orange rounded-2xl p-5 flex items-center justify-between group-hover:-translate-y-1 transition-transform">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-nb-orange-soft text-nb-orange rounded-xl flex items-center justify-center text-xl mr-4">
-                  <i className="fas fa-heart"></i>
-                </div>
-                <div className="text-left">
-                  <h3 className="font-display font-bold text-lg text-nb-ink">Food Bank</h3>
-                  <p className="text-xs text-slate-500 font-bold uppercase">Manage Inventory</p>
-                </div>
-              </div>
-              <i className="fas fa-arrow-right text-slate-300 group-hover:text-nb-orange transition-colors"></i>
-            </div>
-          </Link>
-
+        <div className="space-y-4">
+            <button 
+              onClick={handleLogin}
+              className="w-full bg-nb-ink text-white font-bold py-4 px-6 rounded-2xl hover:bg-slate-800 transition-colors flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            >
+              <span className="text-xl">G</span>
+              <span>Get Started with Google</span>
+            </button>
+            <p className="text-xs text-slate-400">
+              Join as a Distributor, Volunteer, or Food Bank.
+            </p>
         </div>
 
         <div className="pt-8">
