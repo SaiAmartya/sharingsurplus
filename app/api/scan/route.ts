@@ -10,7 +10,7 @@ export async function POST(req: Request) {
 
     const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 
-    // Using gemini-1.5-flash as it is a reliable model for vision tasks
+    // Using gemini-2.5-flash as it is a reliable model for vision tasks
     const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash",
     });
