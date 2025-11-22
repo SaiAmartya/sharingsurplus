@@ -3,11 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { auth, db, storage, googleProvider } from "@/lib/firebase";
-import { collection, addDoc, Timestamp } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { auth, googleProvider } from "@/lib/firebase";
 import { signInWithPopup, onAuthStateChanged, User } from "firebase/auth";
-import { Donation } from "@/types/schema";
 import { createUserProfile, getUserProfile } from "@/lib/auth-helpers";
 
 export default function CreateDonation() {
@@ -26,7 +23,6 @@ export default function CreateDonation() {
     expiryDate: "",
     pickupWindow: "today-2-4pm",
     photo: null as File | null,
-    photoUrl: "",
     address: "",
     city: "",
     lat: 0,
@@ -93,16 +89,6 @@ export default function CreateDonation() {
     }
   };
 
-  const uploadImage = async (file: File): Promise<string> => {
-    const user = auth.currentUser;
-    if (!user) throw new Error("User not authenticated");
-
-    const storageRef = ref(storage, `donations/${user.uid}/${Date.now()}_${file.name}`);
-    await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(storageRef);
-    return downloadURL;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -143,77 +129,47 @@ export default function CreateDonation() {
         return;
       }
 
-      let photoUrl = formData.photoUrl;
+      // Prepare form data
+      const data = new FormData();
+      data.append("title", formData.title);
+      data.append("description", formData.description);
+      data.append("weight", formData.weight);
+      data.append("weightUnit", formData.weightUnit);
+      data.append("expiryDate", formData.expiryDate);
+      data.append("pickupWindow", formData.pickupWindow);
+      data.append("address", formData.address);
+      data.append("city", formData.city);
+      data.append("lat", formData.lat.toString());
+      data.append("lng", formData.lng.toString());
 
-      // Upload image if provided
       if (formData.photo) {
-        try {
-          photoUrl = await uploadImage(formData.photo);
-        } catch (uploadError) {
-          console.error("Image upload error:", uploadError);
-          setError("Failed to upload image. Please try again.");
-          setLoading(false);
-          return;
-        }
+        data.append("photo", formData.photo);
       }
 
-      // Get geocoded coordinates (simplified - in production, use Google Maps Geocoding API)
-      // For now, using placeholder coordinates
-      const lat = formData.lat || 43.6532;
-      const lng = formData.lng || -79.3832;
+      // Get ID token
+      const idToken = await user.getIdToken();
 
-      // Convert weight to kg
-      const weightInKg = formData.weightUnit === "lbs" 
-        ? parseFloat(formData.weight) * 0.453592 
-        : parseFloat(formData.weight);
-
-      // Create donation object
-      const donation: Omit<Donation, "id"> = {
-        donorId: user.uid,
-        title: formData.title,
-        description: formData.description || "",
-        weight: weightInKg,
-        weightUnit: "kg",
-        expiryDate: Timestamp.fromDate(new Date(formData.expiryDate)),
-        pickupWindow: formData.pickupWindow,
-        status: "available",
-        createdAt: Timestamp.now(),
-        location: {
-          lat,
-          lng,
-          address: `${formData.address}, ${formData.city}`,
+      // Send request to API
+      const response = await fetch("/api/donations", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
         },
-      };
+        body: data,
+      });
 
-      // Only include photoUrl if it exists (Firestore doesn't allow undefined)
-      if (photoUrl) {
-        donation.photoUrl = photoUrl;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create donation");
       }
 
-      console.log("Saving donation to Firestore...", donation);
-
-      // Save to Firestore
-      const docRef = await addDoc(collection(db, "donations"), donation);
-      console.log("Donation saved successfully with ID:", docRef.id);
-
+      console.log("Donation created successfully");
+      
       // Success - redirect to donor dashboard
       router.push("/donor");
     } catch (err: any) {
       console.error("Error creating donation:", err);
-      console.error("Error code:", err.code);
-      console.error("Error message:", err.message);
-      console.error("Full error:", JSON.stringify(err, null, 2));
-      
-      // Handle specific Firestore permission errors
-      if (err.code === "permission-denied") {
-        setError("Permission denied. Your user profile may not be set up correctly. Please sign out and sign in again.");
-      } else if (err.code === "unauthenticated") {
-        setError("You must be signed in to create a donation. Please sign in again.");
-      } else if (err.code === "failed-precondition") {
-        setError("Firestore rules error. Please ensure your user profile exists with the 'donor' role.");
-      } else {
-        setError(err.message || "Failed to create donation. Please try again. Error: " + (err.code || "Unknown"));
-      }
+      setError(err.message || "Failed to create donation. Please try again.");
       setLoading(false);
     }
   };
@@ -479,4 +435,3 @@ export default function CreateDonation() {
     </div>
   );
 }
-
