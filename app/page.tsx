@@ -11,7 +11,7 @@ export default function Home() {
         
         <div className="space-y-2">
           <h1 className="font-display text-5xl font-bold text-nb-ink leading-tight">
-            Share <br/><span className="text-nb-blue">Surplus.</span>
+            Shurplus
           </h1>
           <p className="text-slate-500 text-lg font-medium">
             Connecting food distributors with communities in need.

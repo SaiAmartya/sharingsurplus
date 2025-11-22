@@ -1,4 +1,20 @@
-CommunityMesh AI: MVP Wireframe SpecificationProject Context: A distributor-to-community automated marketplace for surplus food.Design Philosophy: Mobile-first for Donors and Volunteers (on-the-go logistics); Responsive Desktop/Tablet for Food Bank Managers (inventory/admin).1. Donor Portal (Mobile View)Target User: Grocery Stores, Restaurants, Farms.Goal: Minimize friction. "Post a donation in under 30 seconds."View A: Donor Dashboard (Home)Concept: Facebook Marketplace style feed, but split between "My Listings" and "Urgent Needs" from banks.+--------------------------------------------------+
+Shurplus: MVP Wireframe Specification
+
+Project Context: A distributor-to-community automated marketplace for surplus food.
+
+Design Philosophy: Mobile-first for Donors and Volunteers (on-the-go logistics); Responsive Desktop/Tablet for Food Bank Managers (inventory/admin).
+
+1. Donor Portal (Mobile View)
+
+Target User: Grocery Stores, Restaurants, Farms.
+
+Goal: Minimize friction. "Post a donation in under 30 seconds."
+
+View A: Donor Dashboard (Home)
+
+Concept: Facebook Marketplace style feed, but split between "My Listings" and "Urgent Needs" from banks.
+
+--------------------------------------------------+
 |  [=] Menu            DONOR HOME        (Profile) |
 +--------------------------------------------------+
 |  [ TAB: My Donations ]   [ TAB: Nearby Needs ]   |
@@ -102,7 +118,7 @@ View D: Active Delivery Mode (Logistics)Focus: Big buttons, clear steps. Trackin
 +--------------------------------------------------+
 3. Food Bank / Charity Dashboard (Desktop/Tablet View)Target User: Food Bank Managers, Inventory Coordinators.Goal: High-level oversight, Inventory Velocity, and Deep Product Inspection (Open Food Facts).View E: Main Dashboard (The "Control Tower")Layout: Sidebar Navigation + Widget Grid.+--------------+---------------------------------------------------------------+
 | COMMUNITY    |  DASHBOARD OVERVIEW                                           |
-| MESH AI      |                                                               |
+| SHURPLUS     |                                                               |
 +--------------+---------------------------------------------------------------+
 | [ Dashboard] |  +-------------------+  +-------------------+  +------------+ |
 |              |  | Total Kg Rescued  |  | Meals Delivered   |  | Active Vol | |
