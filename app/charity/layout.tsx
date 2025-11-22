@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/app/context/AuthContext";
 
 export default function CharityLayout({
   children,
@@ -9,6 +10,7 @@ export default function CharityLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const { user, profile, logout } = useAuth();
 
   const isActive = (path: string) => pathname === path;
 
@@ -41,12 +43,17 @@ export default function CharityLayout({
         <div className="px-6 mt-auto">
                 <div className="bg-nb-bg p-4 rounded-2xl">
                 <div className="flex items-center mb-2">
-                    <div className="w-8 h-8 bg-nb-ink rounded-full flex items-center justify-center text-white text-xs font-bold">M</div>
-                    <div className="ml-3">
-                        <p className="text-xs font-bold text-nb-ink">Manager Jane</p>
-                        <p className="text-[10px] text-slate-400 uppercase">Admin</p>
+                    <div className="w-8 h-8 bg-nb-ink rounded-full flex items-center justify-center text-white text-xs font-bold">
+                      {user?.displayName?.charAt(0) || 'U'}
+                    </div>
+                    <div className="ml-3 overflow-hidden">
+                        <p className="text-xs font-bold text-nb-ink truncate">{user?.displayName || 'User'}</p>
+                        <p className="text-[10px] text-slate-400 uppercase truncate">{profile?.organizationName || 'Admin'}</p>
                     </div>
                 </div>
+                <button onClick={logout} className="w-full text-xs font-bold text-red-500 hover:text-red-700 text-left mt-2">
+                  Sign Out
+                </button>
                 </div>
         </div>
       </div>
