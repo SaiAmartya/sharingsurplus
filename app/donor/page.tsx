@@ -32,14 +32,21 @@ export default function DonorDashboard() {
       setLoadingDonations(true);
       const q = query(
         collection(db, "donations"),
-        where("donorId", "==", user.uid),
-        orderBy("createdAt", "desc")
+        where("donorId", "==", user.uid)
       );
       const unsubscribeDonations = onSnapshot(q, (snapshot) => {
         const donationsList = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         })) as Donation[];
+        
+        // Sort client-side to avoid Firestore composite index requirement
+        donationsList.sort((a, b) => {
+          const timeA = a.createdAt?.seconds || 0;
+          const timeB = b.createdAt?.seconds || 0;
+          return timeB - timeA;
+        });
+        
         setMyDonations(donationsList);
         setLoadingDonations(false);
       }, (error) => {
