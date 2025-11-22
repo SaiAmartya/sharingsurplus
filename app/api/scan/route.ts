@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
 export async function POST(req: Request) {
   try {
@@ -8,27 +8,30 @@ export async function POST(req: Request) {
       return Response.json({ error: "GOOGLE_API_KEY is not set" }, { status: 500 });
     }
 
-    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-
-    // Using gemini-2.5-flash as it is a reliable model for vision tasks
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
-    });
+    const genAI = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY });
 
     const prompt = "Identify the main item in this image. Return JSON only with these fields: product_name, brands (guess if visible), quantity (estimated count or weight), nutriscore_grade (A/B/C/D/E estimate based on healthiness), category. Do not use markdown formatting.";
 
-    const result = await model.generateContent([
-      prompt,
-      {
-        inlineData: {
-          data: imageBase64,
-          mimeType: "image/jpeg",
+    // Using gemini-2.5-flash as it is a reliable model for vision tasks
+    const response = await genAI.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: [
+        {
+          role: "user",
+          parts: [
+            { text: prompt },
+            {
+              inlineData: {
+                data: imageBase64,
+                mimeType: "image/jpeg",
+              },
+            },
+          ],
         },
-      },
-    ]);
+      ],
+    });
 
-    const response = await result.response;
-    const text = response.text();
+    const text = response.text;
     
     return Response.json({ output: text });
   } catch (error) {
