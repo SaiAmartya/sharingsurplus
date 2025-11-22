@@ -1,26 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Outfit:wght@400;600;800&display=swap');
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --font-sans: "DM Sans", sans-serif;
+  --font-display: "Outfit", sans-serif;
+  
+  --color-nb-bg: #F8FAFC;
+  --color-nb-ink: #1E293B;
+  --color-nb-blue: #4F46E5;
+  --color-nb-blue-soft: #E0E7FF;
+  --color-nb-orange: #FB923C;
+  --color-nb-orange-soft: #FFEDD5;
+  --color-nb-red: #F43F5E;
+  --color-nb-red-soft: #FFE4E6;
+  --color-nb-teal: #2DD4BF;
+  --color-nb-teal-soft: #CCFBF1;
+
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
+  --radius-blob: 40% 60% 70% 30% / 40% 50% 60% 50%;
+  
+  --shadow-soft: 0 10px 40px -10px rgba(0,0,0,0.05);
+  --shadow-glow: 0 0 20px rgba(79, 70, 229, 0.2);
+  --shadow-float: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* --- NEO-BAUHAUS UTILITIES --- */
+@layer utilities {
+  .geo-circle {
+    border-radius: 50%;
+  }
+  
+  .geo-pill {
+    border-radius: 9999px;
+  }
+  
+  .nb-card {
+    @apply bg-white border border-slate-100 rounded-2xl transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)];
+  }
+  
+  .nb-card:hover {
+    @apply transform -translate-y-1 shadow-float;
+  }
+  
+  .nb-input {
+    @apply bg-nb-bg border border-slate-200 rounded-xl transition-all duration-200 outline-none;
+  }
+  
+  .nb-input:focus {
+    @apply bg-white border-nb-blue ring-4 ring-nb-blue/10;
+  }
+  
+  /* Hide Scrollbar */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  /* Background Pattern */
+  .bg-dots {
+    background-image: radial-gradient(#CBD5E1 1px, transparent 1px);
+    background-size: 24px 24px;
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  @apply text-nb-ink bg-nb-bg font-sans;
 }
