@@ -38,8 +38,8 @@ export interface Donation {
   donorId: string;
   title: string;
   description: string;
-  weight: number; // in kg
-  weightUnit: 'kg' | 'lbs';
+  weight: number; // in kg or count
+  weightUnit: 'kg' | 'lbs' | 'items';
   expiryDate: Timestamp;
   pickupWindow: string; // e.g., "Today 2-4pm"
   status: 'available' | 'claimed' | 'picked_up' | 'delivered';
