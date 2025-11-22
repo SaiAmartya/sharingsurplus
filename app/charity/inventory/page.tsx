@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, query, orderBy, onSnapshot, deleteDoc, doc, Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, deleteDoc, doc, Timestamp, where } from 'firebase/firestore';
+import { useAuth } from '@/app/context/AuthContext';
 
 interface InventoryItem {
   id: string;
@@ -16,23 +17,46 @@ interface InventoryItem {
 }
 
 export default function CharityInventory() {
+  const { user, loading: authLoading } = useAuth();
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Subscribe to real-time updates
-    const q = query(collection(db, "inventory"), orderBy("createdAt", "desc"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const items = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as InventoryItem[];
-      setInventory(items);
+    if (authLoading) return; // Wait for auth to initialize
+    
+    if (!user) {
       setLoading(false);
-    });
+      setInventory([]);
+      return;
+    }
+
+    // Subscribe to real-time updates
+    const q = query(
+      collection(db, "inventory"), 
+      where("foodBankId", "==", user.uid)
+    );
+    
+    const unsubscribe = onSnapshot(
+      q, 
+      (snapshot) => {
+        const items = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as InventoryItem[];
+        setInventory(items);
+        setLoading(false);
+        setError(null);
+      },
+      (err) => {
+        console.error("Error fetching inventory:", err);
+        setError(err.message);
+        setLoading(false);
+      }
+    );
 
     return () => unsubscribe();
-  }, []);
+  }, [user, authLoading]);
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation(); // Prevent row click if we add one later
@@ -62,10 +86,28 @@ export default function CharityInventory() {
     });
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-nb-blue"></div>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-nb-ink"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-20 bg-red-50 rounded-3xl border-2 border-red-200">
+        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <i className="fas fa-exclamation-triangle text-2xl text-red-500"></i>
+        </div>
+        <h3 className="text-xl font-bold text-red-700 mb-2">Error Loading Inventory</h3>
+        <p className="text-red-600 max-w-md mx-auto mb-4">{error}</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="px-6 py-2 bg-red-500 text-white rounded-full font-bold hover:bg-red-600 transition-all"
+        >
+          Retry
+        </button>
       </div>
     );
   }

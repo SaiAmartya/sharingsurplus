@@ -46,8 +46,11 @@ service cloud.firestore {
 
     // Inventory collection
     match /inventory/{itemId} {
+      // Allow users to read/write their own inventory items
+      // Read allowed for all authenticated users (query filtering happens client-side)
       allow read: if isSignedIn();
-      allow write: if isSignedIn() && hasRole('foodbank');
+      allow create: if isSignedIn() && (request.resource.data.foodBankId == request.auth.uid);
+      allow update, delete: if isSignedIn() && (resource.data.foodBankId == request.auth.uid);
     }
   }
 }
