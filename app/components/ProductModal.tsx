@@ -27,7 +27,7 @@ export default function ProductModal({ product, barcode, onClose }: ProductModal
     }
     return 1;
   });
-  const [nutriScore, setNutriScore] = useState(product.nutriscore_grade?.toUpperCase() || '?');
+  const [category, setCategory] = useState(product.categories || '');
   
   // Default expiry to 1 week from now
   const [expiryDate, setExpiryDate] = useState(() => {
@@ -35,6 +35,12 @@ export default function ProductModal({ product, barcode, onClose }: ProductModal
     date.setDate(date.getDate() + 7);
     return date.toISOString().split('T')[0];
   });
+
+  const addDays = (days: number) => {
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    setExpiryDate(date.toISOString().split('T')[0]);
+  };
 
   const handleSave = async () => {
     if (!user) {
@@ -52,7 +58,9 @@ export default function ProductModal({ product, barcode, onClose }: ProductModal
         brand: brand || 'Unknown Brand',
         quantity: quantity,
         barcode: barcode,
-        nutriScore: nutriScore,
+        category: category,
+        // nutriScore removed from UI, saving original if available or null
+        nutriScore: product.nutriscore_grade || null, 
         allergens: product.allergens_tags || [],
         expiryDate: Timestamp.fromDate(new Date(expiryDate)),
         createdAt: Timestamp.now(),
@@ -69,99 +77,140 @@ export default function ProductModal({ product, barcode, onClose }: ProductModal
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
       
-      <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl relative z-10 flex flex-col max-h-[90vh] overflow-hidden">
-        <div className="bg-slate-50 p-6 flex justify-between items-center border-b border-slate-100">
-          <h2 className="font-display text-xl font-bold text-nb-ink">Product Analysis</h2>
-          <button onClick={onClose} className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center hover:bg-nb-red hover:text-white transition-colors">
+      <div className="bg-white w-full max-w-lg rounded-[2rem] shadow-2xl relative z-10 flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div className="bg-white p-6 flex justify-between items-center border-b border-slate-100 sticky top-0 z-20">
+          <h2 className="font-display text-xl font-bold text-nb-ink">Add to Inventory</h2>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center hover:bg-slate-200 transition-colors">
             <i className="fas fa-times"></i>
           </button>
         </div>
 
-        <div className="p-8 overflow-y-auto space-y-6">
-          <div className="flex gap-6">
-            {product.image_url && (
-              <img src={product.image_url} alt={product.product_name} className="w-32 h-32 object-contain bg-white rounded-xl border border-slate-100" />
-            )}
-            <div>
-              <input 
-                type="text" 
-                value={productName}
-                onChange={(e) => setProductName(e.target.value)}
-                className="font-display text-2xl font-bold text-nb-ink bg-transparent border-b border-transparent hover:border-slate-200 focus:border-nb-blue outline-none w-full placeholder:text-slate-300"
-                placeholder="Product Name"
-              />
-              <input 
-                type="text" 
-                value={brand}
-                onChange={(e) => setBrand(e.target.value)}
-                className="text-slate-500 font-medium bg-transparent border-b border-transparent hover:border-slate-200 focus:border-nb-blue outline-none w-full mt-1 placeholder:text-slate-300"
-                placeholder="Brand"
-              />
-              <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full bg-slate-100 text-xs font-bold text-slate-600">
-                Barcode: {barcode}
+        <div className="p-6 overflow-y-auto space-y-6">
+          {/* Product Header */}
+          <div className="flex gap-5">
+            <div className="w-24 h-24 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-center shrink-0 overflow-hidden">
+                {product.image_url ? (
+                <img src={product.image_url} alt={product.product_name} className="w-full h-full object-contain" />
+                ) : (
+                <i className="fas fa-box text-slate-300 text-3xl"></i>
+                )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Product Name</label>
+                <input 
+                    type="text" 
+                    value={productName}
+                    onChange={(e) => setProductName(e.target.value)}
+                    className="font-display text-lg font-bold text-nb-ink bg-transparent border-b border-slate-200 focus:border-nb-blue outline-none w-full placeholder:text-slate-300 pb-1 transition-colors"
+                    placeholder="e.g. Apple AirPods"
+                />
+              </div>
+              <div className="mt-3 space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Brand</label>
+                <input 
+                    type="text" 
+                    value={brand}
+                    onChange={(e) => setBrand(e.target.value)}
+                    className="text-sm font-medium text-slate-600 bg-transparent border-b border-slate-200 focus:border-nb-blue outline-none w-full placeholder:text-slate-300 pb-1 transition-colors"
+                    placeholder="e.g. Apple"
+                />
               </div>
             </div>
           </div>
 
+          {/* Details Grid */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="p-4 bg-nb-bg rounded-2xl">
-              <label className="text-xs font-bold text-slate-400 uppercase block mb-1">Nutri-Score</label>
-              <select 
-                value={nutriScore}
-                onChange={(e) => setNutriScore(e.target.value)}
-                className="text-2xl font-display font-bold text-nb-ink bg-transparent outline-none w-full cursor-pointer"
-              >
-                <option value="A">A</option>
-                <option value="B">B</option>
-                <option value="C">C</option>
-                <option value="D">D</option>
-                <option value="E">E</option>
-                <option value="?">?</option>
-              </select>
+            {/* Quantity */}
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 focus-within:border-nb-blue/50 focus-within:bg-blue-50/50 transition-colors">
+              <label className="text-[10px] font-bold text-slate-400 uppercase block mb-2">Quantity</label>
+              <div className="flex items-center">
+                <button 
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    className="w-8 h-8 rounded-full bg-white shadow-sm text-slate-600 hover:bg-nb-blue hover:text-white transition-colors flex items-center justify-center"
+                >
+                    <i className="fas fa-minus text-xs"></i>
+                </button>
+                <input 
+                    type="number" 
+                    value={quantity} 
+                    min="1"
+                    onChange={(e) => setQuantity(Number(e.target.value))}
+                    className="w-full bg-transparent font-display font-bold text-2xl outline-none text-center text-nb-ink" 
+                />
+                <button 
+                    onClick={() => setQuantity(quantity + 1)}
+                    className="w-8 h-8 rounded-full bg-white shadow-sm text-slate-600 hover:bg-nb-blue hover:text-white transition-colors flex items-center justify-center"
+                >
+                    <i className="fas fa-plus text-xs"></i>
+                </button>
+              </div>
             </div>
-            <div className="p-4 bg-nb-bg rounded-2xl">
-              <label className="text-xs font-bold text-slate-400 uppercase block mb-1">Quantity</label>
+
+            {/* Category */}
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 focus-within:border-nb-blue/50 focus-within:bg-blue-50/50 transition-colors">
+              <label className="text-[10px] font-bold text-slate-400 uppercase block mb-2">Category</label>
               <input 
-                type="number" 
-                value={quantity} 
-                min="1"
-                onChange={(e) => setQuantity(Number(e.target.value))}
-                className="w-full bg-transparent font-display font-bold text-2xl outline-none" 
+                type="text" 
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full bg-transparent font-display font-bold text-lg outline-none text-nb-ink placeholder:text-slate-300"
+                placeholder="e.g. Electronics" 
               />
             </div>
-            <div className="p-4 bg-nb-bg rounded-2xl col-span-2">
-              <label className="text-xs font-bold text-slate-400 uppercase block mb-1">Expiry Date</label>
-              <input 
+          </div>
+
+          {/* Expiry Date */}
+          <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
+            <label className="text-[10px] font-bold text-slate-400 uppercase block mb-3">Expiry Date</label>
+            <input 
                 type="date" 
                 value={expiryDate} 
                 onChange={(e) => setExpiryDate(e.target.value)}
-                className="w-full bg-transparent font-display font-bold text-xl outline-none text-nb-ink" 
-              />
+                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-display font-bold text-lg outline-none text-nb-ink focus:border-nb-blue transition-colors mb-4" 
+            />
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                <button onClick={() => addDays(3)} className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:border-nb-blue hover:text-nb-blue transition-colors whitespace-nowrap">+3 Days</button>
+                <button onClick={() => addDays(7)} className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:border-nb-blue hover:text-nb-blue transition-colors whitespace-nowrap">+1 Week</button>
+                <button onClick={() => addDays(30)} className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:border-nb-blue hover:text-nb-blue transition-colors whitespace-nowrap">+1 Month</button>
+                <button onClick={() => addDays(90)} className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:border-nb-blue hover:text-nb-blue transition-colors whitespace-nowrap">+3 Months</button>
             </div>
           </div>
 
           {product.allergens_tags && product.allergens_tags.length > 0 && (
              <div className="p-4 bg-red-50 rounded-2xl border border-red-100">
-                <label className="text-xs font-bold text-red-400 uppercase block mb-2">Allergens</label>
+                <label className="text-[10px] font-bold text-red-400 uppercase block mb-2">Allergens Detected</label>
                 <div className="flex flex-wrap gap-2">
                   {product.allergens_tags.map((allergen, i) => (
-                    <span key={i} className="px-2 py-1 bg-white text-red-600 text-xs font-bold rounded-md border border-red-100">
+                    <span key={i} className="px-2 py-1 bg-white text-red-600 text-xs font-bold rounded-md border border-red-100 shadow-sm">
                       {allergen.replace('en:', '')}
                     </span>
                   ))}
                 </div>
              </div>
           )}
+        </div>
 
-          <button 
-            onClick={handleSave} 
-            disabled={loading}
-            className="w-full bg-nb-ink text-white py-4 rounded-2xl font-bold shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all disabled:opacity-50"
-          >
-            {loading ? 'Saving...' : 'Add to Inventory'}
-          </button>
+        <div className="p-6 border-t border-slate-100 bg-slate-50 sticky bottom-0 z-20">
+            <button 
+                onClick={handleSave} 
+                disabled={loading}
+                className="w-full bg-nb-ink text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:transform-none flex items-center justify-center gap-2"
+            >
+                {loading ? (
+                    <>
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        <span>Saving...</span>
+                    </>
+                ) : (
+                    <>
+                        <i className="fas fa-check"></i>
+                        <span>Confirm & Add Item</span>
+                    </>
+                )}
+            </button>
         </div>
       </div>
     </div>
