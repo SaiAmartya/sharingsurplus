@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { auth, googleProvider } from "@/lib/firebase";
+import { auth, googleProvider, db } from "@/lib/firebase";
 import { signInWithPopup, onAuthStateChanged, User } from "firebase/auth";
+import { collection, addDoc, Timestamp } from "firebase/firestore";
 import { createUserProfile, getUserProfile } from "@/lib/auth-helpers";
 
 export default function CreateDonation() {
@@ -22,14 +23,11 @@ export default function CreateDonation() {
     weightUnit: "kg" as "kg" | "lbs",
     expiryDate: "",
     pickupWindow: "today-2-4pm",
-    photo: null as File | null,
     address: "",
     city: "",
     lat: 0,
     lng: 0,
   });
-
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   // Check authentication status
   useEffect(() => {
@@ -76,19 +74,6 @@ export default function CreateDonation() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setFormData((prev) => ({ ...prev, photo: file }));
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -129,39 +114,27 @@ export default function CreateDonation() {
         return;
       }
 
-      // Prepare form data
-      const data = new FormData();
-      data.append("title", formData.title);
-      data.append("description", formData.description);
-      data.append("weight", formData.weight);
-      data.append("weightUnit", formData.weightUnit);
-      data.append("expiryDate", formData.expiryDate);
-      data.append("pickupWindow", formData.pickupWindow);
-      data.append("address", formData.address);
-      data.append("city", formData.city);
-      data.append("lat", formData.lat.toString());
-      data.append("lng", formData.lng.toString());
+      const weightNum = parseFloat(formData.weight);
+      const weightInKg = formData.weightUnit === "lbs" ? weightNum * 0.453592 : weightNum;
 
-      if (formData.photo) {
-        data.append("photo", formData.photo);
-      }
-
-      // Get ID token
-      const idToken = await user.getIdToken();
-
-      // Send request to API
-      const response = await fetch("/api/donations", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${idToken}`,
+      const donationData = {
+        donorId: user.uid,
+        title: formData.title,
+        description: formData.description || "",
+        weight: weightInKg,
+        weightUnit: "kg",
+        expiryDate: Timestamp.fromDate(new Date(formData.expiryDate)),
+        pickupWindow: formData.pickupWindow,
+        status: "available",
+        createdAt: Timestamp.now(),
+        location: {
+          lat: formData.lat,
+          lng: formData.lng,
+          address: `${formData.address}, ${formData.city}`,
         },
-        body: data,
-      });
+      };
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to create donation");
-      }
+      await addDoc(collection(db, "donations"), donationData);
 
       console.log("Donation created successfully");
       
@@ -251,41 +224,8 @@ export default function CreateDonation() {
       )}
         
       <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Photo Area */}
-        <div>
-          <label className="text-xs font-bold text-slate-400 uppercase ml-2 mb-2 block">
-            Photo (Optional)
-          </label>
-          <label
-            htmlFor="photo-upload"
-            className="aspect-video bg-nb-bg rounded-3xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400 hover:bg-slate-100 hover:border-nb-blue/30 cursor-pointer transition-all group relative overflow-hidden"
-          >
-            {imagePreview ? (
-              <img
-                src={imagePreview}
-                alt="Preview"
-                className="w-full h-full object-cover rounded-3xl"
-              />
-            ) : (
-              <>
-                <div className="w-14 h-14 bg-white rounded-full shadow-sm flex items-center justify-center mb-3 text-nb-blue group-hover:scale-110 transition-transform">
-                    <i className="fas fa-camera text-xl"></i>
-                </div>
-                <span className="font-bold text-sm group-hover:text-nb-blue">
-                  Tap to Add Photo
-                </span>
-              </>
-            )}
-          </label>
-          <input
-            id="photo-upload"
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-            </div>
-
+            {/* Photo Area Removed */}
+            
             {/* Fields */}
             <div className="space-y-5">
                 <div>

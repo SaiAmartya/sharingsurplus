@@ -23,11 +23,7 @@ export default function DonationCard({ donation }: DonationCardProps) {
   return (
     <div className="nb-card p-4 flex items-stretch">
       <div className="w-24 bg-slate-100 rounded-2xl flex items-center justify-center shrink-0">
-        {donation.photoUrl ? (
-          <img src={donation.photoUrl} alt={donation.title} className="w-full h-full object-cover rounded-2xl" />
-        ) : (
-          <i className="fas fa-box text-3xl text-slate-400"></i>
-        )}
+        <i className="fas fa-box text-3xl text-slate-400"></i>
       </div>
       <div className="p-4 flex-1">
         <h3 className="font-display text-lg font-bold text-nb-ink">{donation.title}</h3>
