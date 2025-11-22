@@ -12,10 +12,22 @@ interface BarcodeScannerProps {
 
 export default function BarcodeScanner({ onDetected, onProductFound, onClose }: BarcodeScannerProps) {
   const scannerRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  // Remove videoRef as we'll use the one inside scannerRef
   const [manualCode, setManualCode] = useState("");
   const [mode, setMode] = useState<'barcode' | 'vision'>('barcode');
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Refs to access latest state/props inside Quagga callbacks without re-running effect
+  const modeRef = useRef(mode);
+  const onDetectedRef = useRef(onDetected);
+
+  useEffect(() => {
+    modeRef.current = mode;
+  }, [mode]);
+
+  useEffect(() => {
+    onDetectedRef.current = onDetected;
+  }, [onDetected]);
 
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,13 +37,8 @@ export default function BarcodeScanner({ onDetected, onProductFound, onClose }: 
     }
   };
 
-  // Barcode Logic (Quagga)
+  // Unified Camera Logic (Quagga handles the stream for both modes)
   useEffect(() => {
-    if (mode !== 'barcode') {
-      Quagga.stop();
-      return;
-    }
-
     let isMounted = true;
 
     if (!scannerRef.current) return;
@@ -60,9 +67,10 @@ export default function BarcodeScanner({ onDetected, onProductFound, onClose }: 
     });
 
     const handleDetected = (result: any) => {
-      if (result?.codeResult?.code && isMounted) {
+      // Only process barcode if in barcode mode
+      if (modeRef.current === 'barcode' && result?.codeResult?.code && isMounted) {
         Quagga.stop();
-        onDetected(result.codeResult.code);
+        onDetectedRef.current(result.codeResult.code);
       }
     };
 
@@ -73,50 +81,22 @@ export default function BarcodeScanner({ onDetected, onProductFound, onClose }: 
       Quagga.offDetected(handleDetected);
       Quagga.stop();
     };
-  }, [mode, onDetected]);
-
-  // Vision Logic (Camera Stream)
-  useEffect(() => {
-    if (mode !== 'vision') return;
-
-    let stream: MediaStream | null = null;
-
-    const startCamera = async () => {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: 'environment' } 
-        });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          // Explicitly play the video to ensure it starts
-          await videoRef.current.play().catch(e => console.error("Error playing video:", e));
-        }
-      } catch (err) {
-        console.error("Error accessing camera:", err);
-      }
-    };
-
-    startCamera();
-
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, [mode]);
+  }, []); // Run once on mount
 
   const captureAndIdentify = async () => {
-    if (!videoRef.current || isProcessing) return;
+    // Find the video element created by Quagga
+    const video = scannerRef.current?.querySelector('video');
+    if (!video || isProcessing) return;
     
     setIsProcessing(true);
     try {
       const canvas = document.createElement('canvas');
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
       
-      ctx.drawImage(videoRef.current, 0, 0);
+      ctx.drawImage(video, 0, 0);
       const base64 = canvas.toDataURL('image/jpeg').split(',')[1];
 
       const res = await fetch('/api/scan', {
@@ -167,19 +147,16 @@ export default function BarcodeScanner({ onDetected, onProductFound, onClose }: 
       </div>
 
       <div className="w-full max-w-md aspect-video bg-black rounded-2xl overflow-hidden relative border-2 border-white/20 mb-8">
-        {mode === 'barcode' ? (
-            <>
-                <div ref={scannerRef} className="w-full h-full [&>video]:w-full [&>video]:h-full [&>video]:object-cover"></div>
-                <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)] z-10"></div>
-            </>
-        ) : (
-            <div className="relative w-full h-full">
-                <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover"></video>
-                {isProcessing && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-                    </div>
-                )}
+        {/* Always render scannerRef to keep camera running */}
+        <div ref={scannerRef} className="w-full h-full [&>video]:w-full [&>video]:h-full [&>video]:object-cover"></div>
+        
+        {mode === 'barcode' && (
+            <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.8)] z-10"></div>
+        )}
+        
+        {mode === 'vision' && isProcessing && (
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
             </div>
         )}
       </div>
