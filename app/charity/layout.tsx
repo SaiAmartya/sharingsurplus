@@ -2,6 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
+import dynamic from "next/dynamic";
+import { getProductByBarcode, ProductData } from "@/lib/openfoodfacts";
+import ProductModal from "@/app/components/ProductModal";
+
+const BarcodeScanner = dynamic(() => import("@/app/components/BarcodeScanner"), {
+  ssr: false,
+});
 
 export default function CharityLayout({
   children,
@@ -9,8 +17,24 @@ export default function CharityLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const [isScanning, setIsScanning] = useState(false);
+  const [scannedProduct, setScannedProduct] = useState<ProductData | null>(null);
+  const [scannedCode, setScannedCode] = useState<string>("");
 
   const isActive = (path: string) => pathname === path;
+
+  const handleBarcodeDetected = async (code: string) => {
+    setIsScanning(false);
+    setScannedCode(code);
+    
+    // Fetch data from Open Food Facts
+    const product = await getProductByBarcode(code);
+    if (product) {
+      setScannedProduct(product);
+    } else {
+      alert("Product not found in Open Food Facts database.");
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-nb-bg font-sans">
@@ -64,7 +88,10 @@ export default function CharityLayout({
                 <button className="w-12 h-12 rounded-full bg-white text-slate-400 hover:text-nb-blue hover:shadow-md transition-all flex items-center justify-center">
                     <i className="fas fa-bell"></i>
                 </button>
-                <button className="bg-nb-ink text-white px-6 py-3 rounded-full font-bold text-sm shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center">
+                <button 
+                  onClick={() => setIsScanning(true)}
+                  className="bg-nb-ink text-white px-6 py-3 rounded-full font-bold text-sm shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center"
+                >
                     <i className="fas fa-barcode mr-2"></i> Scan Intake
                 </button>
             </div>
@@ -75,6 +102,22 @@ export default function CharityLayout({
             {children}
         </div>
       </div>
+
+      {/* Integrations */}
+      {isScanning && (
+        <BarcodeScanner 
+          onDetected={handleBarcodeDetected} 
+          onClose={() => setIsScanning(false)} 
+        />
+      )}
+
+      {scannedProduct && (
+        <ProductModal 
+          product={scannedProduct} 
+          barcode={scannedCode}
+          onClose={() => setScannedProduct(null)} 
+        />
+      )}
     </div>
   );
 }
