@@ -42,7 +42,6 @@ export interface Donation {
   weightUnit: 'kg' | 'lbs';
   expiryDate: Timestamp;
   pickupWindow: string; // e.g., "Today 2-4pm"
-  photoUrl?: string;
   status: 'available' | 'claimed' | 'picked_up' | 'delivered';
   createdAt: Timestamp;
   location: {

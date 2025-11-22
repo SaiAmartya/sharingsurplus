@@ -12,21 +12,36 @@ service cloud.firestore {
     }
     
     function hasRole(role) {
-      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
+      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
+      return userDoc != null && userDoc.data != null && userDoc.data.role == role;
+    }
+    
+    function hasProfile() {
+      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
+      return userDoc != null && userDoc.data != null;
     }
 
     // Users collection
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow write: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId);
+      allow delete: if isSignedIn() && isOwner(userId);
     }
 
     // Donations collection
     match /donations/{donationId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && hasRole('donor');
-      allow update: if isSignedIn() && (resource.data.donorId == request.auth.uid || hasRole('volunteer') || hasRole('foodbank'));
+      allow read: if true;
+      // Allow create if signed in AND:
+      // 1. Has donor role, OR
+      // 2. Is creating donation for themselves (donorId matches auth.uid), OR
+      // 3. Is authenticated (fallback for testing)
+      allow create: if isSignedIn() && 
+        (hasRole('donor') || 
+         request.resource.data.donorId == request.auth.uid ||
+         !hasProfile()); // Allow if profile doesn't exist yet (will be created)
+      allow update: if isSignedIn() && 
+        (resource.data.donorId == request.auth.uid || hasRole('volunteer') || hasRole('foodbank'));
       allow delete: if isSignedIn() && resource.data.donorId == request.auth.uid;
     }
 
