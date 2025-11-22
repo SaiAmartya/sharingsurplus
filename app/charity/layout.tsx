@@ -20,7 +20,7 @@ export default function CharityLayout({
             <Link href="/" className="w-10 h-10 bg-nb-blue rounded-xl mr-0 lg:mr-3 shrink-0 shadow-glow flex items-center justify-center text-white hover:bg-indigo-600 transition-colors">
                 <i className="fas fa-leaf"></i>
             </Link>
-            <span className="font-display font-bold text-2xl text-nb-ink hidden lg:block tracking-tight">Mesh<span className="text-nb-blue">AI</span></span>
+            <span className="font-display font-bold text-2xl text-nb-ink hidden lg:block tracking-tight">Shur<span className="text-nb-blue">plus</span></span>
         </div>
 
         <nav className="flex-1 px-4 space-y-2">
