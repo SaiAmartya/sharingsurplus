@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, query, orderBy, onSnapshot, deleteDoc, doc, Timestamp, where } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, deleteDoc, doc, Timestamp, where, updateDoc } from 'firebase/firestore';
 import { useAuth } from '@/app/context/AuthContext';
 
 interface InventoryItem {
@@ -15,6 +15,109 @@ interface InventoryItem {
   imageUrl?: string;
   barcode: string;
 }
+
+const InventoryItemRow = ({ item }: { item: InventoryItem }) => {
+  const [dateValue, setDateValue] = useState(
+    item.expiryDate ? item.expiryDate.toDate().toISOString().split('T')[0] : ''
+  );
+
+  useEffect(() => {
+    setDateValue(item.expiryDate ? item.expiryDate.toDate().toISOString().split('T')[0] : '');
+  }, [item.expiryDate]);
+
+  const handleDateChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newDateStr = e.target.value;
+    setDateValue(newDateStr);
+
+    if (!newDateStr) return;
+    
+    try {
+      // Use UTC Noon to ensure stability across timezones
+      const newDate = new Date(newDateStr);
+      newDate.setUTCHours(12, 0, 0, 0);
+      
+      await updateDoc(doc(db, "inventory", item.id), {
+        expiryDate: Timestamp.fromDate(newDate)
+      });
+    } catch (error) {
+      console.error("Error updating expiry date:", error);
+    }
+  };
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm('Remove this item from inventory?')) {
+      try {
+        await deleteDoc(doc(db, "inventory", item.id));
+      } catch (error) {
+        console.error("Error removing item:", error);
+        alert("Failed to remove item.");
+      }
+    }
+  };
+
+  const getScoreColor = (score: string) => {
+    const s = score?.toUpperCase();
+    if (['A', 'B'].includes(s)) return 'bg-nb-teal-soft text-nb-teal';
+    if (['C'].includes(s)) return 'bg-nb-orange-soft text-nb-orange';
+    return 'bg-nb-red-soft text-nb-red';
+  };
+
+  return (
+    <div className="bg-white rounded-2xl p-4 grid grid-cols-6 items-center shadow-sm hover:shadow-md hover:translate-y-[-2px] transition-all border border-transparent hover:border-nb-blue/20 group">
+      {/* Product Info */}
+      <div className="col-span-2 flex items-center">
+          <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center mr-4 overflow-hidden shrink-0 border border-slate-100">
+              {item.imageUrl ? (
+                <img src={item.imageUrl} alt={item.productName} className="w-full h-full object-cover" />
+              ) : (
+                <i className="fas fa-box text-slate-300"></i>
+              )}
+          </div>
+          <div className="min-w-0">
+              <p className="font-bold text-nb-ink truncate pr-2">{item.productName}</p>
+              <p className="text-xs text-slate-400 font-medium truncate">{item.brand}</p>
+          </div>
+      </div>
+
+      {/* Quantity */}
+      <div>
+        <div className="font-medium text-slate-600 bg-slate-50 inline-block px-3 py-1 rounded-lg w-max">
+          {item.quantity} units
+        </div>
+      </div>
+
+      {/* Expiry */}
+      <div className="font-medium text-slate-600">
+        <input 
+          type="date"
+          className="bg-transparent border border-transparent hover:border-slate-200 rounded px-2 py-1 text-sm text-slate-600 font-medium focus:ring-2 focus:ring-nb-blue focus:border-transparent transition-all cursor-pointer w-full max-w-[140px]"
+          value={dateValue}
+          onChange={handleDateChange}
+          onClick={(e) => e.stopPropagation()}
+        />
+      </div>
+
+      {/* Score */}
+      <div>
+        <span className={`px-3 py-1 rounded-full text-xs font-bold ${getScoreColor(item.nutriScore)}`}>
+          {item.nutriScore || '?'}
+        </span>
+      </div>
+
+      {/* Action */}
+      <div className="text-right">
+          <button 
+            onClick={handleDelete}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors"
+            title="Remove Item"
+          >
+              <i className="fas fa-trash-alt"></i>
+          </button>
+      </div>
+    </div>
+  );
+};
 
 export default function CharityInventory() {
   const { user } = useAuth();
@@ -41,34 +144,6 @@ export default function CharityInventory() {
 
     return () => unsubscribe();
   }, [user]);
-
-  const handleDelete = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation(); // Prevent row click if we add one later
-    if (window.confirm('Remove this item from inventory?')) {
-      try {
-        await deleteDoc(doc(db, "inventory", id));
-      } catch (error) {
-        console.error("Error removing item:", error);
-        alert("Failed to remove item.");
-      }
-    }
-  };
-
-  const getScoreColor = (score: string) => {
-    const s = score?.toUpperCase();
-    if (['A', 'B'].includes(s)) return 'bg-nb-teal-soft text-nb-teal';
-    if (['C'].includes(s)) return 'bg-nb-orange-soft text-nb-orange';
-    return 'bg-nb-red-soft text-nb-red';
-  };
-
-  const formatDate = (timestamp: Timestamp) => {
-    if (!timestamp) return 'N/A';
-    return timestamp.toDate().toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
-    });
-  };
 
   if (loading) {
     return (
@@ -100,52 +175,7 @@ export default function CharityInventory() {
         </div>
 
         {inventory.map((item) => (
-          <div key={item.id} className="bg-white rounded-2xl p-4 grid grid-cols-6 items-center shadow-sm hover:shadow-md hover:translate-y-[-2px] transition-all border border-transparent hover:border-nb-blue/20 group">
-              {/* Product Info */}
-              <div className="col-span-2 flex items-center">
-                  <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center mr-4 overflow-hidden shrink-0 border border-slate-100">
-                      {item.imageUrl ? (
-                        <img src={item.imageUrl} alt={item.productName} className="w-full h-full object-cover" />
-                      ) : (
-                        <i className="fas fa-box text-slate-300"></i>
-                      )}
-                  </div>
-                  <div className="min-w-0">
-                      <p className="font-bold text-nb-ink truncate pr-2">{item.productName}</p>
-                      <p className="text-xs text-slate-400 font-medium truncate">{item.brand}</p>
-                  </div>
-              </div>
-
-              {/* Quantity */}
-              <div>
-                <div className="font-medium text-slate-600 bg-slate-50 inline-block px-3 py-1 rounded-lg w-max">
-                  {item.quantity} units
-                </div>
-              </div>
-
-              {/* Expiry */}
-              <div className="font-medium text-slate-600">
-                {formatDate(item.expiryDate)}
-              </div>
-
-              {/* Score */}
-              <div>
-                <span className={`px-3 py-1 rounded-full text-xs font-bold ${getScoreColor(item.nutriScore)}`}>
-                  {item.nutriScore || '?'}
-                </span>
-              </div>
-
-              {/* Action */}
-              <div className="text-right">
-                  <button 
-                    onClick={(e) => handleDelete(e, item.id)}
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors"
-                    title="Remove Item"
-                  >
-                      <i className="fas fa-trash-alt"></i>
-                  </button>
-              </div>
-          </div>
+          <InventoryItemRow key={item.id} item={item} />
         ))}
     </div>
   );
