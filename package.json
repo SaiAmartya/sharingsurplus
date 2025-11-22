@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@ericblade/quagga2": "^1.10.2",
+    "@google/generative-ai": "^0.24.1",
     "firebase": "^12.6.0",
     "ndarray": "^1.0.19",
     "ndarray-pixels": "^5.0.1",

@@ -39,6 +39,12 @@ export default function CharityLayout({
     }
   };
 
+  const handleProductFound = (product: ProductData) => {
+    setIsScanning(false);
+    setScannedProduct(product);
+    setScannedCode("VISION-SCAN");
+  };
+
   return (
     <div className="flex min-h-screen bg-nb-bg font-sans">
       {/* Sidebar - Desktop */}
@@ -131,6 +137,7 @@ export default function CharityLayout({
       {isScanning && (
         <BarcodeScanner 
           onDetected={handleBarcodeDetected} 
+          onProductFound={handleProductFound}
           onClose={() => setIsScanning(false)} 
         />
       )}
