@@ -15,7 +15,26 @@ interface ProductModalProps {
 export default function ProductModal({ product, barcode, onClose }: ProductModalProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [quantity, setQuantity] = useState(1);
+  
+  // Editable State
+  const [productName, setProductName] = useState(product.product_name || '');
+  const [brand, setBrand] = useState(product.brands || '');
+  const [quantity, setQuantity] = useState(() => {
+    // Try to parse a number from the quantity string if it exists
+    if (product.quantity) {
+      const parsed = parseInt(product.quantity);
+      return isNaN(parsed) ? 1 : parsed;
+    }
+    return 1;
+  });
+  const [nutriScore, setNutriScore] = useState(product.nutriscore_grade?.toUpperCase() || '?');
+  
+  // Default expiry to 1 week from now
+  const [expiryDate, setExpiryDate] = useState(() => {
+    const date = new Date();
+    date.setDate(date.getDate() + 7);
+    return date.toISOString().split('T')[0];
+  });
 
   const handleSave = async () => {
     if (!user) {
@@ -29,13 +48,13 @@ export default function ProductModal({ product, barcode, onClose }: ProductModal
       
       await addDoc(collection(db, 'inventory'), {
         foodBankId: userId,
-        productName: product.product_name || 'Unknown Product',
-        brand: product.brands || 'Unknown Brand',
+        productName: productName || 'Unknown Product',
+        brand: brand || 'Unknown Brand',
         quantity: quantity,
         barcode: barcode,
-        nutriScore: product.nutriscore_grade?.toUpperCase() || '?',
+        nutriScore: nutriScore,
         allergens: product.allergens_tags || [],
-        expiryDate: Timestamp.now(), // In real app, user should select this
+        expiryDate: Timestamp.fromDate(new Date(expiryDate)),
         createdAt: Timestamp.now(),
         imageUrl: product.image_url || null
       });
@@ -66,8 +85,20 @@ export default function ProductModal({ product, barcode, onClose }: ProductModal
               <img src={product.image_url} alt={product.product_name} className="w-32 h-32 object-contain bg-white rounded-xl border border-slate-100" />
             )}
             <div>
-              <h3 className="font-display text-2xl font-bold text-nb-ink">{product.product_name || 'Unknown Product'}</h3>
-              <p className="text-slate-500 font-medium">{product.brands || 'Unknown Brand'}</p>
+              <input 
+                type="text" 
+                value={productName}
+                onChange={(e) => setProductName(e.target.value)}
+                className="font-display text-2xl font-bold text-nb-ink bg-transparent border-b border-transparent hover:border-slate-200 focus:border-nb-blue outline-none w-full placeholder:text-slate-300"
+                placeholder="Product Name"
+              />
+              <input 
+                type="text" 
+                value={brand}
+                onChange={(e) => setBrand(e.target.value)}
+                className="text-slate-500 font-medium bg-transparent border-b border-transparent hover:border-slate-200 focus:border-nb-blue outline-none w-full mt-1 placeholder:text-slate-300"
+                placeholder="Brand"
+              />
               <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full bg-slate-100 text-xs font-bold text-slate-600">
                 Barcode: {barcode}
               </div>
@@ -77,16 +108,36 @@ export default function ProductModal({ product, barcode, onClose }: ProductModal
           <div className="grid grid-cols-2 gap-4">
             <div className="p-4 bg-nb-bg rounded-2xl">
               <label className="text-xs font-bold text-slate-400 uppercase block mb-1">Nutri-Score</label>
-              <span className="text-2xl font-display font-bold text-nb-ink">{product.nutriscore_grade?.toUpperCase() || 'N/A'}</span>
+              <select 
+                value={nutriScore}
+                onChange={(e) => setNutriScore(e.target.value)}
+                className="text-2xl font-display font-bold text-nb-ink bg-transparent outline-none w-full cursor-pointer"
+              >
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
+                <option value="E">E</option>
+                <option value="?">?</option>
+              </select>
             </div>
             <div className="p-4 bg-nb-bg rounded-2xl">
-              <label className="text-xs font-bold text-slate-400 uppercase block mb-1">Quantity to Add</label>
+              <label className="text-xs font-bold text-slate-400 uppercase block mb-1">Quantity</label>
               <input 
                 type="number" 
                 value={quantity} 
                 min="1"
                 onChange={(e) => setQuantity(Number(e.target.value))}
                 className="w-full bg-transparent font-display font-bold text-2xl outline-none" 
+              />
+            </div>
+            <div className="p-4 bg-nb-bg rounded-2xl col-span-2">
+              <label className="text-xs font-bold text-slate-400 uppercase block mb-1">Expiry Date</label>
+              <input 
+                type="date" 
+                value={expiryDate} 
+                onChange={(e) => setExpiryDate(e.target.value)}
+                className="w-full bg-transparent font-display font-bold text-xl outline-none text-nb-ink" 
               />
             </div>
           </div>

@@ -88,6 +88,8 @@ export default function BarcodeScanner({ onDetected, onProductFound, onClose }: 
         });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
+          // Explicitly play the video to ensure it starts
+          await videoRef.current.play().catch(e => console.error("Error playing video:", e));
         }
       } catch (err) {
         console.error("Error accessing camera:", err);
@@ -172,7 +174,7 @@ export default function BarcodeScanner({ onDetected, onProductFound, onClose }: 
             </>
         ) : (
             <div className="relative w-full h-full">
-                <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover"></video>
+                <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover"></video>
                 {isProcessing && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
