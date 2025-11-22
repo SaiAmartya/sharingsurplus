@@ -5,6 +5,7 @@ import { auth, googleProvider } from "@/lib/firebase";
 import { signInWithPopup } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
+import { getRoleRoute } from "@/lib/routes";
 
 export default function Home() {
   const { user, profile, loading } = useAuth();
@@ -16,19 +17,7 @@ export default function Home() {
         router.push('/onboarding');
       } else {
         // Redirect based on role
-        switch (profile.role) {
-          case 'donor':
-            router.push('/donor');
-            break;
-          case 'volunteer':
-            router.push('/volunteer');
-            break;
-          case 'foodbank':
-            router.push('/charity/dashboard');
-            break;
-          default:
-            router.push('/onboarding');
-        }
+        router.push(getRoleRoute(profile.role));
       }
     }
   }, [user, profile, loading, router]);

@@ -2,20 +2,33 @@
 
 import { useState, useEffect } from "react";
 import { auth, db } from "@/lib/firebase";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, onSnapshot, serverTimestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { User } from "firebase/auth";
-import { UserRole } from "@/types/schema";
+import { getRoleRoute } from "@/lib/routes";
 
+/**
+ * Supported question types in the onboarding flow
+ */
 type QuestionType = 'text' | 'select' | 'multiselect' | 'role-select';
 
+/**
+ * Defines a single question in the onboarding flow
+ */
 interface Question {
+  /** Unique identifier for storing the answer */
   id: string;
+  /** Type of input control to render */
   type: QuestionType;
+  /** Main question text shown to user */
   question: string;
+  /** Optional additional context shown below the question */
   subtext?: string;
+  /** Options for select/multiselect types */
   options?: { label: string; value: string; icon?: string }[];
+  /** Placeholder text for input fields */
   placeholder?: string;
+  /** Validation function to check input validity */
   validation?: (value: string | string[]) => boolean;
 }
 
@@ -47,7 +60,13 @@ export default function Onboarding() {
         question: 'What is your phone number?',
         subtext: 'We need this for real-time logistics coordination.',
         placeholder: '(555) 123-4567',
-        validation: (val) => typeof val === 'string' && val.length > 9
+        validation: (val) => {
+          if (typeof val !== 'string') return false;
+          // Remove common formatting characters
+          const cleaned = val.replace(/[\s\-\(\)]/g, '');
+          // Check if it's a valid length and contains only digits (optionally with + prefix)
+          return /^\+?\d{10,15}$/.test(cleaned);
+        }
       }
     ];
 
@@ -155,30 +174,36 @@ export default function Onboarding() {
   };
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (u) => {
+    let unsubscribeDoc: (() => void) | undefined;
+
+    const unsubscribeAuth = auth.onAuthStateChanged(async (u) => {
       if (u) {
         setUser(u);
-        // Check if user already has data
+        // Real-time listener for user profile updates
         const docRef = doc(db, "users", u.uid);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          if (data.onboardingCompleted) {
-            // Redirect if already completed
-            if (data.role === 'donor') router.push('/donor');
-            else if (data.role === 'volunteer') router.push('/volunteer');
-            else if (data.role === 'foodbank') router.push('/charity/dashboard');
-          } else {
-            // Pre-fill existing data
-            setFormData(data);
+        unsubscribeDoc = onSnapshot(docRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            if (data.onboardingCompleted) {
+              // Redirect if already completed
+              router.push(getRoleRoute(data.role));
+            } else {
+              // Pre-fill existing data
+              setFormData(data);
+            }
           }
-        }
+          setLoading(false);
+        });
       } else {
         router.push('/');
+        setLoading(false);
       }
-      setLoading(false);
     });
-    return () => unsubscribe();
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeDoc) unsubscribeDoc();
+    };
   }, [router]);
 
   const questions = getQuestions(formData.role as string);
@@ -186,6 +211,16 @@ export default function Onboarding() {
   const progress = ((currentStep + 1) / questions.length) * 100;
 
   const handleNext = async () => {
+    // Validate current step if validation function exists
+    if (currentQ.validation) {
+      const isValid = currentQ.validation(formData[currentQ.id] as string | string[]);
+      if (!isValid) {
+        // You might want to show an error message here
+        alert("Please enter a valid value.");
+        return;
+      }
+    }
+
     if (currentStep < questions.length - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
@@ -213,15 +248,13 @@ export default function Onboarding() {
         email: user.email,
         displayName: user.displayName,
         onboardingCompleted: true,
-        createdAt: new Date() // Should use serverTimestamp in real app
+        createdAt: serverTimestamp()
       };
       
       await setDoc(doc(db, "users", user.uid), finalData, { merge: true });
       
       // Redirect based on role
-      if (formData.role === 'donor') router.push('/donor');
-      else if (formData.role === 'volunteer') router.push('/volunteer');
-      else if (formData.role === 'foodbank') router.push('/charity/dashboard');
+      router.push(getRoleRoute(formData.role as string));
       
     } catch (error) {
       console.error("Error saving profile:", error);
