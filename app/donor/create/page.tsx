@@ -85,6 +85,10 @@ export default function CreateDonation() {
         throw new Error("Fill in all required fields");
       }
 
+      if (!formData.pickupAllDay && (!formData.pickupStartTime || !formData.pickupEndTime)) {
+        throw new Error("Please specify a pickup time window");
+      }
+
       const weight = parseFloat(formData.weight);
       if (isNaN(weight) || weight <= 0) throw new Error("Invalid weight");
 
