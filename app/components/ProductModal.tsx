@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ProductData } from '@/lib/openfoodfacts';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { useAuth } from '@/app/context/AuthContext';
 
 interface ProductModalProps {
   product: ProductData;
@@ -12,14 +13,19 @@ interface ProductModalProps {
 }
 
 export default function ProductModal({ product, barcode, onClose }: ProductModalProps) {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
   const handleSave = async () => {
+    if (!user) {
+      alert("You must be logged in to add items.");
+      return;
+    }
+
     setLoading(true);
     try {
-      // TODO: Get actual user ID from auth context
-      const userId = 'current-user-uid'; 
+      const userId = user.uid; 
       
       await addDoc(collection(db, 'inventory'), {
         foodBankId: userId,
