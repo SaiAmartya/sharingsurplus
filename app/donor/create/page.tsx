@@ -303,14 +303,6 @@ export default function CreateDonation() {
                   placeholder="Street address"
                 />
               </div>
-
-              <input
-                name="city"
-                value={formData.city}
-                onChange={handleInputChange}
-                className="nb-input p-4 w-full"
-                placeholder="City"
-              />
             </div>
           )}
         </div>
