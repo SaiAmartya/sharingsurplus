@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CommunityMesh - Neo-Bauhaus Complete MVP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Fonts: Outfit (Geometric Heading) and DM Sans (Friendly Body) -->
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['DM Sans', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        'nb-bg': '#F8FAFC',
+                        'nb-ink': '#1E293B',
+                        'nb-blue': '#4F46E5',   /* Indigo 600 */
+                        'nb-blue-soft': '#E0E7FF',
+                        'nb-orange': '#FB923C', /* Orange 400 */
+                        'nb-orange-soft': '#FFEDD5',
+                        'nb-red': '#F43F5E',    /* Rose 500 */
+                        'nb-red-soft': '#FFE4E6',
+                        'nb-teal': '#2DD4BF',   /* Teal 400 */
+                        'nb-teal-soft': '#CCFBF1',
+                    },
+                    borderRadius: {
+                        'xl': '1rem',
+                        '2xl': '1.5rem',
+                        '3xl': '2rem',
+                        'blob': '40% 60% 70% 30% / 40% 50% 60% 50%',
+                    },
+                    boxShadow: {
+                        'soft': '0 10px 40px -10px rgba(0,0,0,0.05)',
+                        'glow': '0 0 20px rgba(79, 70, 229, 0.2)',
+                        'float': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* --- NEO-BAUHAUS UTILITIES --- */
+        body { color: #1E293B; }
+        
+        /* Geometric Shapes */
+        .geo-circle { border-radius: 50%; }
+        .geo-pill { border-radius: 9999px; }
+        
+        /* Interactions */
+        .nb-card {
+            background: white;
+            border-radius: 1.5rem;
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid #F1F5F9;
+        }
+        .nb-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.01);
+        }
+
+        /* Inputs */
+        .nb-input {
+            background-color: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 1rem;
+            transition: all 0.2s;
+        }
+        .nb-input:focus {
+            background-color: white;
+            border-color: #4F46E5;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+            outline: none;
+        }
+
+        /* Hide Scrollbar */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Background Pattern */
+        .bg-dots {
+            background-image: radial-gradient(#CBD5E1 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+<body class="bg-nb-bg font-sans h-screen overflow-hidden flex flex-col bg-dots">
+
+    <!-- DEV TOOL: ROLE SWITCHER -->
+    <div class="absolute top-4 left-0 right-0 flex justify-center z-50 pointer-events-none">
+        <div class="bg-white/90 backdrop-blur shadow-soft rounded-full p-1.5 flex space-x-1 pointer-events-auto border border-slate-200/60">
+            <button onclick="setRole('donor')" id="btn-role-donor" class="px-5 py-2 rounded-full text-xs font-bold uppercase transition-all hover:bg-slate-50">Donor</button>
+            <button onclick="setRole('volunteer')" id="btn-role-volunteer" class="px-5 py-2 rounded-full text-xs font-bold uppercase transition-all hover:bg-slate-50">Vol</button>
+            <button onclick="setRole('charity')" id="btn-role-charity" class="px-5 py-2 rounded-full text-xs font-bold uppercase transition-all hover:bg-slate-50">Admin</button>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- ROLE 1: DONOR PORTAL (Mobile) -->
+    <!-- ========================================== -->
+    <div id="role-donor" class="role-container flex-1 relative overflow-hidden hidden">
+        
+        <!-- Decor -->
+        <div class="absolute top-0 right-0 w-64 h-64 bg-nb-blue-soft/40 rounded-bl-[100px] pointer-events-none"></div>
+
+        <!-- View A: Donor Dashboard -->
+        <div id="donor-view-home" class="absolute inset-0 overflow-y-auto pb-32 pt-24 px-6">
+            <!-- Header -->
+            <div class="mb-8">
+                <h1 class="font-display text-4xl font-bold text-nb-ink leading-tight">
+                    Share <br><span class="text-nb-blue">Surplus.</span>
+                </h1>
+                
+                <!-- Soft Tabs -->
+                <div class="mt-6 flex bg-white rounded-full p-1.5 shadow-sm w-full border border-slate-100 relative overflow-hidden">
+                    <div class="absolute inset-y-1.5 left-1.5 w-[calc(50%-6px)] bg-nb-ink rounded-full transition-transform duration-300" id="donor-tab-bg"></div>
+                    <button onclick="switchDonorTab('nearby')" class="flex-1 py-3 rounded-full text-sm font-bold relative z-10 transition-colors text-white" id="donor-tab-nearby">Nearby Needs</button>
+                    <button onclick="switchDonorTab('myitems')" class="flex-1 py-3 rounded-full text-sm font-bold relative z-10 transition-colors text-slate-500 hover:text-nb-blue" id="donor-tab-myitems">My Listings</button>
+                </div>
+            </div>
+
+            <!-- Feed Content (Nearby Needs) -->
+            <div id="donor-feed-nearby" class="space-y-6">
+                <!-- Urgent Card -->
+                <div class="bg-nb-red-soft rounded-3xl p-6 relative overflow-hidden group cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02]">
+                    <div class="absolute -right-6 -top-6 w-32 h-32 bg-nb-red/20 rounded-full group-hover:scale-110 transition-transform"></div>
+                    
+                    <div class="flex items-start justify-between relative z-10">
+                        <span class="bg-white text-nb-red px-3 py-1.5 rounded-full text-xs font-bold shadow-sm tracking-wide">URGENT • 2km</span>
+                        <span class="bg-white/60 w-10 h-10 flex items-center justify-center rounded-full text-nb-red shadow-sm"><i class="fas fa-arrow-right"></i></span>
+                    </div>
+                    
+                    <div class="mt-6 relative z-10">
+                        <h3 class="font-display text-2xl font-bold text-rose-900">Canned Beans</h3>
+                        <p class="text-rose-900/70 text-sm mt-1 font-medium">St. Mary's Food Bank</p>
+                        <div class="mt-4 inline-flex items-center text-rose-900/80 text-xs font-bold bg-white/40 px-3 py-1 rounded-full">
+                            <i class="far fa-clock mr-2"></i> Needed by 4 PM
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Regular Need Card -->
+                <div class="nb-card p-1.5 flex items-stretch">
+                    <div class="w-24 bg-nb-teal-soft rounded-2xl flex items-center justify-center shrink-0">
+                        <i class="fas fa-baby-carriage text-3xl text-nb-teal"></i>
+                    </div>
+                    <div class="p-4 flex-1">
+                        <h3 class="font-display text-lg font-bold text-nb-ink">Baby Formula</h3>
+                        <p class="text-slate-500 text-sm">North York Harvest</p>
+                        <div class="mt-3 flex justify-between items-center">
+                            <span class="text-xs font-bold text-nb-orange bg-nb-orange-soft px-2.5 py-1 rounded-lg">High Demand</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Feed Content (My Listings - Hidden by default) -->
+            <div id="donor-feed-myitems" class="space-y-6 hidden">
+                 <div class="nb-card p-1.5 flex items-stretch opacity-60">
+                    <div class="w-24 bg-slate-100 rounded-2xl flex items-center justify-center shrink-0">
+                        <i class="fas fa-bread-slice text-3xl text-slate-400"></i>
+                    </div>
+                    <div class="p-4 flex-1">
+                        <h3 class="font-display text-lg font-bold text-slate-500">Sourdough Bread</h3>
+                        <p class="text-slate-400 text-sm">Picked up by Mike</p>
+                        <div class="mt-3">
+                            <span class="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg">Completed</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAB -->
+            <button onclick="navDonor('create')" class="fixed bottom-8 right-8 w-16 h-16 bg-nb-ink text-white rounded-[24px] shadow-glow hover:rotate-90 transition-all flex items-center justify-center text-2xl z-30 group">
+                <i class="fas fa-plus group-hover:scale-110 transition-transform"></i>
+            </button>
+        </div>
+
+        <!-- View B: Create Donation -->
+        <div id="donor-view-create" class="absolute inset-0 overflow-y-auto bg-white hidden z-40 px-6 pt-24 pb-10">
+            <button onclick="navDonor('home')" class="absolute top-6 left-6 w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center hover:bg-slate-100 z-50 text-nb-ink transition-colors">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            
+            <h2 class="font-display text-3xl font-bold mb-8">New <span class="text-nb-blue">Donation</span></h2>
+
+            <div class="space-y-6">
+                <!-- Photo Area -->
+                <div class="aspect-video bg-nb-bg rounded-3xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400 hover:bg-slate-100 hover:border-nb-blue/30 cursor-pointer transition-all group">
+                    <div class="w-14 h-14 bg-white rounded-full shadow-sm flex items-center justify-center mb-3 text-nb-blue group-hover:scale-110 transition-transform">
+                        <i class="fas fa-camera text-xl"></i>
+                    </div>
+                    <span class="font-bold text-sm group-hover:text-nb-blue">Tap to Add Photo</span>
+                </div>
+
+                <!-- Fields -->
+                <div class="space-y-5">
+                    <div>
+                        <label class="text-xs font-bold text-slate-400 uppercase ml-2 mb-1 block">Item Title</label>
+                        <input type="text" class="w-full nb-input p-4 font-medium" placeholder="e.g. 50 lbs Sourdough Bread">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs font-bold text-slate-400 uppercase ml-2 mb-1 block">Weight (kg)</label>
+                            <input type="number" class="w-full nb-input p-4 font-medium" placeholder="0">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-400 uppercase ml-2 mb-1 block">Expiry</label>
+                            <input type="date" class="w-full nb-input p-4 font-medium text-slate-500">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-xs font-bold text-slate-400 uppercase ml-2 mb-1 block">Pickup Window</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button class="py-3 rounded-2xl border border-nb-blue bg-nb-blue-soft/30 text-nb-blue font-bold text-sm">Today 2-4 PM</button>
+                            <button class="py-3 rounded-2xl border border-slate-200 bg-white text-slate-500 font-bold text-sm hover:bg-slate-50">Tomorrow</button>
+                        </div>
+                    </div>
+
+                     <div>
+                        <label class="text-xs font-bold text-slate-400 uppercase ml-2 mb-1 block">Description</label>
+                        <textarea class="w-full nb-input p-4 font-medium h-24 resize-none" placeholder="Location details, condition..."></textarea>
+                    </div>
+                </div>
+
+                <div class="pt-4">
+                    <button onclick="navDonor('home')" class="w-full bg-nb-ink text-white py-5 rounded-2xl font-display font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">
+                        Post Donation
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- ROLE 2: VOLUNTEER (Mobile) -->
+    <!-- ========================================== -->
+    <div id="role-volunteer" class="role-container flex-1 relative overflow-hidden hidden">
+        
+        <!-- View C: Route Discovery -->
+        <div id="vol-view-routes" class="absolute inset-0 overflow-y-auto pt-24 px-6 pb-10">
+            <!-- Header -->
+            <div class="flex justify-between items-end mb-8">
+                <div>
+                    <p class="text-slate-400 text-xs font-bold uppercase mb-1 tracking-wide">Current Status</p>
+                    <h2 class="font-display text-3xl font-bold text-nb-teal flex items-center">
+                        Online <span class="ml-2 w-3 h-3 bg-nb-teal rounded-full animate-pulse"></span>
+                    </h2>
+                </div>
+                <!-- Geometric Toggle -->
+                <div class="w-16 h-9 bg-nb-teal-soft rounded-full relative cursor-pointer transition-colors">
+                    <div class="w-7 h-7 bg-nb-teal rounded-full absolute top-1 right-1 shadow-sm"></div>
+                </div>
+            </div>
+
+            <h3 class="font-display text-xl font-bold mb-5 text-nb-ink">Smart Routes <span class="text-slate-400 text-sm font-sans font-normal ml-2">(AI Optimized)</span></h3>
+
+            <!-- Route Card -->
+            <div class="bg-white rounded-[2rem] shadow-soft p-6 mb-6 relative overflow-hidden border border-slate-100">
+                <!-- Decorative Blob -->
+                <div class="absolute top-0 right-0 w-40 h-40 bg-nb-orange-soft rounded-bl-full -mr-10 -mt-10 z-0 opacity-50"></div>
+
+                <div class="relative z-10">
+                    <div class="flex justify-between items-start mb-8">
+                        <span class="bg-nb-ink text-white px-4 py-1.5 rounded-full text-xs font-bold tracking-wide shadow-sm">45 MINS</span>
+                        <div class="text-right">
+                            <span class="font-display font-bold text-3xl text-slate-800 leading-none">80</span>
+                            <div class="text-xs text-slate-400 font-bold uppercase">Meals Saved</div>
+                        </div>
+                    </div>
+
+                    <!-- Visual Route Line -->
+                    <div class="relative pl-4 border-l-2 border-slate-100 space-y-8 mb-8 ml-2">
+                        <!-- Stop 1 -->
+                        <div class="relative">
+                            <div class="absolute -left-[23px] top-1 w-5 h-5 bg-white border-4 border-nb-ink rounded-full"></div>
+                            <div>
+                                <h4 class="font-bold text-nb-ink text-lg">Loblaws Market</h4>
+                                <p class="text-sm text-slate-500">Pickup: 3 Boxes Apples</p>
+                            </div>
+                        </div>
+                        <!-- Stop 2 -->
+                        <div class="relative">
+                            <div class="absolute -left-[23px] top-1 w-5 h-5 bg-nb-ink rounded-full shadow-sm"></div>
+                            <div>
+                                <h4 class="font-bold text-nb-ink text-lg">Central Hub</h4>
+                                <p class="text-sm text-slate-500">Drop-off Zone B</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="navVol('active')" class="w-full bg-nb-blue text-white py-4 rounded-2xl font-bold hover:bg-indigo-600 transition-all shadow-glow hover:-translate-y-1">
+                        Start Route
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Secondary Route (Dimmed) -->
+            <div class="bg-white/60 rounded-[2rem] p-6 border border-slate-100 opacity-60">
+                 <div class="flex justify-between items-start mb-4">
+                    <span class="bg-slate-200 text-slate-500 px-4 py-1.5 rounded-full text-xs font-bold">1.5 HRS</span>
+                    <span class="font-display font-bold text-2xl text-slate-400">120 Meals</span>
+                </div>
+                <p class="text-slate-400 font-bold">Farm Boy -> Shelter</p>
+            </div>
+        </div>
+
+        <!-- View D: Active Mode -->
+        <div id="vol-view-active" class="absolute inset-0 flex flex-col bg-white hidden pt-20">
+            <!-- Map Area -->
+            <div class="flex-1 bg-nb-bg relative overflow-hidden">
+                <div class="absolute inset-0 bg-dots opacity-40"></div>
+                <!-- Abstract Map Elements -->
+                <div class="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 border-[32px] border-nb-blue-soft/30 rounded-full animate-pulse"></div>
+                <div class="absolute top-1/3 left-1/2 w-4 h-4 bg-nb-blue rounded-full shadow-glow transform -translate-x-1/2 -translate-y-1/2 z-10"></div>
+                
+                <!-- Floating Info Pill -->
+                <div class="absolute top-6 left-6 right-6 bg-white/90 backdrop-blur rounded-2xl shadow-float p-4 flex items-center space-x-4 border border-white">
+                    <div class="w-12 h-12 bg-nb-orange-soft text-nb-orange rounded-full flex items-center justify-center text-xl shrink-0">
+                        <i class="fas fa-location-arrow"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-bold uppercase tracking-wide">Navigating to</p>
+                        <p class="font-display font-bold text-xl text-nb-ink">Loblaws Market</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Sheet -->
+            <div class="bg-white rounded-t-[2.5rem] shadow-[0_-10px_60px_-15px_rgba(0,0,0,0.1)] p-8 pb-10 relative z-20">
+                <!-- Pull Indicator -->
+                <div class="w-12 h-1.5 bg-slate-100 rounded-full mx-auto mb-6"></div>
+                
+                <div class="flex justify-between items-center mb-8">
+                    <div>
+                        <h3 class="font-display text-2xl font-bold text-nb-ink">Task 1/2</h3>
+                        <p class="text-slate-500 font-medium mt-1">Contact: Manager John (555-0199)</p>
+                    </div>
+                    <button class="w-12 h-12 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 hover:bg-nb-blue hover:text-white transition-colors">
+                        <i class="fas fa-phone"></i>
+                    </button>
+                </div>
+
+                <!-- Slide to Arrive -->
+                <div class="relative h-20 bg-slate-50 rounded-full overflow-hidden border border-slate-100 group">
+                    <div class="absolute left-0 top-0 bottom-0 w-20 bg-nb-ink rounded-full flex items-center justify-center text-white cursor-pointer transition-all hover:w-full duration-500 ease-out z-10 shadow-md">
+                        <i class="fas fa-chevron-right group-hover:opacity-0 transition-opacity"></i>
+                        <span class="absolute opacity-0 group-hover:opacity-100 font-bold font-display text-lg tracking-wide">ARRIVED</span>
+                    </div>
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <span class="text-slate-300 font-bold text-sm uppercase tracking-widest pl-10">Slide to Confirm</span>
+                    </div>
+                </div>
+                
+                 <div class="grid grid-cols-2 gap-4 mt-4">
+                    <button class="py-4 rounded-2xl border border-slate-100 text-slate-500 font-bold hover:bg-slate-50">Skip</button>
+                    <button class="py-4 rounded-2xl border border-slate-100 text-nb-red font-bold hover:bg-nb-red-soft">Report Issue</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- ROLE 3: CHARITY ADMIN (Desktop) -->
+    <!-- ========================================== -->
+    <div id="role-charity" class="role-container flex-1 relative overflow-hidden hidden flex-row bg-white">
+        
+        <!-- Sidebar -->
+        <div class="w-24 lg:w-72 border-r border-slate-100 flex flex-col py-8 items-center lg:items-stretch z-20 bg-white">
+            <div class="px-6 mb-12 flex items-center justify-center lg:justify-start">
+                <div class="w-10 h-10 bg-nb-blue rounded-xl mr-0 lg:mr-3 shrink-0 shadow-glow flex items-center justify-center text-white">
+                    <i class="fas fa-leaf"></i>
+                </div>
+                <span class="font-display font-bold text-2xl text-nb-ink hidden lg:block tracking-tight">Mesh<span class="text-nb-blue">AI</span></span>
+            </div>
+
+            <nav class="flex-1 px-4 space-y-2">
+                <button onclick="navCharity('dashboard')" id="charity-nav-dashboard" class="w-full p-4 rounded-2xl flex items-center justify-center lg:justify-start bg-nb-blue text-white font-bold shadow-md transition-all">
+                    <i class="fas fa-chart-pie text-xl lg:mr-4"></i>
+                    <span class="hidden lg:block">Overview</span>
+                </button>
+                <button onclick="navCharity('inventory')" id="charity-nav-inventory" class="w-full p-4 rounded-2xl flex items-center justify-center lg:justify-start text-slate-500 hover:bg-slate-50 hover:text-nb-blue transition-all">
+                    <i class="fas fa-box text-xl lg:mr-4"></i>
+                    <span class="hidden lg:block">Inventory</span>
+                </button>
+                <button onclick="navCharity('volunteers')" id="charity-nav-volunteers" class="w-full p-4 rounded-2xl flex items-center justify-center lg:justify-start text-slate-500 hover:bg-slate-50 hover:text-nb-blue transition-all">
+                    <i class="fas fa-users text-xl lg:mr-4"></i>
+                    <span class="hidden lg:block">Volunteers</span>
+                </button>
+            </nav>
+
+            <div class="px-6 mt-auto hidden lg:block">
+                 <div class="bg-nb-bg p-4 rounded-2xl">
+                    <div class="flex items-center mb-2">
+                        <div class="w-8 h-8 bg-nb-ink rounded-full flex items-center justify-center text-white text-xs font-bold">M</div>
+                        <div class="ml-3">
+                            <p class="text-xs font-bold text-nb-ink">Manager Jane</p>
+                            <p class="text-[10px] text-slate-400 uppercase">Admin</p>
+                        </div>
+                    </div>
+                 </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 bg-nb-bg relative overflow-hidden flex flex-col">
+            
+            <!-- Top Bar -->
+            <div class="h-24 flex items-center justify-between px-10 shrink-0">
+                <h2 class="font-display text-3xl font-bold text-nb-ink" id="charity-header-title">Dashboard</h2>
+                <div class="flex items-center space-x-4">
+                    <button class="w-12 h-12 rounded-full bg-white text-slate-400 hover:text-nb-blue hover:shadow-md transition-all flex items-center justify-center">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                    <button onclick="toggleModal('modal-product')" class="bg-nb-ink text-white px-6 py-3 rounded-full font-bold text-sm shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center">
+                        <i class="fas fa-barcode mr-2"></i> Scan Intake
+                    </button>
+                </div>
+            </div>
+
+            <!-- View E: Dashboard -->
+            <div id="charity-view-dashboard" class="charity-subview flex-1 overflow-y-auto p-10 pt-2 space-y-8">
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="nb-card p-6 flex flex-col justify-between h-40">
+                        <div class="w-10 h-10 bg-nb-blue-soft rounded-full flex items-center justify-center text-nb-blue mb-4">
+                            <i class="fas fa-weight-hanging"></i>
+                        </div>
+                        <div>
+                            <p class="text-slate-400 text-xs font-bold uppercase tracking-wider">Total Rescued</p>
+                            <p class="font-display text-3xl font-bold text-nb-ink mt-1">1,240 <span class="text-base text-slate-400 font-sans font-medium">kg</span></p>
+                        </div>
+                    </div>
+                    <div class="nb-card p-6 flex flex-col justify-between h-40">
+                        <div class="w-10 h-10 bg-nb-teal-soft rounded-full flex items-center justify-center text-nb-teal mb-4">
+                            <i class="fas fa-utensils"></i>
+                        </div>
+                        <div>
+                            <p class="text-slate-400 text-xs font-bold uppercase tracking-wider">Meals Served</p>
+                            <p class="font-display text-3xl font-bold text-nb-teal mt-1">3,400</p>
+                        </div>
+                    </div>
+                    <div class="nb-card p-6 flex flex-col justify-between h-40 border-l-4 border-l-nb-red">
+                        <div class="w-10 h-10 bg-nb-red-soft rounded-full flex items-center justify-center text-nb-red mb-4">
+                            <i class="fas fa-hourglass-half"></i>
+                        </div>
+                        <div>
+                            <p class="text-slate-400 text-xs font-bold uppercase tracking-wider">Expiring (24h)</p>
+                            <p class="font-display text-3xl font-bold text-nb-red mt-1">15 <span class="text-base text-slate-400 font-sans font-medium">items</span></p>
+                        </div>
+                    </div>
+                     <div class="nb-card p-6 flex flex-col justify-between h-40">
+                        <div class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 mb-4">
+                            <i class="fas fa-truck"></i>
+                        </div>
+                         <div>
+                            <p class="text-slate-400 text-xs font-bold uppercase tracking-wider">Active Drivers</p>
+                            <p class="font-display text-3xl font-bold text-nb-ink mt-1">12</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Incoming Ticker -->
+                <div class="bg-nb-ink rounded-3xl p-8 text-white shadow-float relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-16 -mt-16 pointer-events-none"></div>
+                    
+                    <div class="flex justify-between items-end mb-6 relative z-10">
+                        <h3 class="font-display text-2xl font-bold">Incoming Logistics</h3>
+                        <span class="inline-flex items-center bg-white/10 px-3 py-1 rounded-full text-xs font-bold text-nb-teal"><span class="w-2 h-2 bg-nb-teal rounded-full mr-2 animate-pulse"></span> Live Updates</span>
+                    </div>
+                    
+                    <div class="space-y-4 relative z-10">
+                        <div class="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/5">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center font-bold mr-4">S</div>
+                                <div>
+                                    <p class="font-bold text-sm">Truck #402 (Sarah)</p>
+                                    <p class="text-xs text-slate-400">Walmart Dairy • 3 Pallets</p>
+                                </div>
+                            </div>
+                            <span class="text-nb-orange font-bold text-sm">ETA 10 MIN</span>
+                        </div>
+                         <div class="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/5">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center font-bold mr-4">M</div>
+                                <div>
+                                    <p class="font-bold text-sm">Truck #112 (Mike)</p>
+                                    <p class="text-xs text-slate-400">Farm A Roots • 12 Boxes</p>
+                                </div>
+                            </div>
+                            <span class="text-nb-teal font-bold text-sm">ARRIVED</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View F: Inventory -->
+            <div id="charity-view-inventory" class="charity-subview flex-1 overflow-y-auto p-10 pt-2 hidden">
+                <!-- Neo-Bauhaus Table -->
+                <div class="space-y-3">
+                    <!-- Header -->
+                    <div class="grid grid-cols-6 px-6 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                        <div class="col-span-2">Product</div>
+                        <div>Qty</div>
+                        <div>Expiry</div>
+                        <div>Score</div>
+                        <div class="text-right">Action</div>
+                    </div>
+
+                    <!-- Row 1 -->
+                    <div class="bg-white rounded-2xl p-4 grid grid-cols-6 items-center shadow-sm hover:shadow-md hover:translate-y-[-2px] transition-all cursor-pointer border border-transparent hover:border-nb-blue/20 group" onclick="toggleModal('modal-product')">
+                        <div class="col-span-2 flex items-center">
+                            <div class="w-12 h-12 bg-nb-red-soft text-nb-red rounded-xl flex items-center justify-center mr-4 group-hover:bg-nb-red group-hover:text-white transition-colors">
+                                <i class="fas fa-wine-bottle"></i>
+                            </div>
+                            <div>
+                                <p class="font-bold text-nb-ink">Coca-Cola Original</p>
+                                <p class="text-xs text-slate-400 font-medium">Beverages • Coca-Cola</p>
+                            </div>
+                        </div>
+                        <div class="font-medium text-slate-600 bg-slate-50 inline-block px-3 py-1 rounded-lg w-max">40 cans</div>
+                        <div class="font-medium text-slate-600">Dec 01, 2025</div>
+                        <div><span class="bg-nb-red-soft text-nb-red px-3 py-1 rounded-full text-xs font-bold">E (Low)</span></div>
+                        <div class="text-right"><button class="text-slate-300 hover:text-nb-blue"><i class="fas fa-chevron-right"></i></button></div>
+                    </div>
+
+                    <!-- Row 2 -->
+                    <div class="bg-white rounded-2xl p-4 grid grid-cols-6 items-center shadow-sm hover:shadow-md hover:translate-y-[-2px] transition-all cursor-pointer border border-transparent hover:border-nb-blue/20 group" onclick="toggleModal('modal-product')">
+                        <div class="col-span-2 flex items-center">
+                            <div class="w-12 h-12 bg-nb-teal-soft text-nb-teal rounded-xl flex items-center justify-center mr-4 group-hover:bg-nb-teal group-hover:text-white transition-colors">
+                                <i class="fas fa-wheat"></i>
+                            </div>
+                            <div>
+                                <p class="font-bold text-nb-ink">Whole Wheat Pasta</p>
+                                <p class="text-xs text-slate-400 font-medium">Grains • Barilla</p>
+                            </div>
+                        </div>
+                        <div class="font-medium text-slate-600 bg-slate-50 inline-block px-3 py-1 rounded-lg w-max">100 kg</div>
+                        <div class="font-medium text-slate-600">Jan 15, 2026</div>
+                        <div><span class="bg-nb-teal-soft text-nb-teal px-3 py-1 rounded-full text-xs font-bold">A (High)</span></div>
+                        <div class="text-right"><button class="text-slate-300 hover:text-nb-blue"><i class="fas fa-chevron-right"></i></button></div>
+                    </div>
+                    
+                     <!-- Row 3 (Urgent) -->
+                    <div class="bg-white rounded-2xl p-4 grid grid-cols-6 items-center shadow-sm hover:shadow-md hover:translate-y-[-2px] transition-all cursor-pointer border border-transparent border-l-4 border-l-nb-orange hover:border-nb-blue/20 group" onclick="toggleModal('modal-product')">
+                        <div class="col-span-2 flex items-center">
+                            <div class="w-12 h-12 bg-nb-orange-soft text-nb-orange rounded-xl flex items-center justify-center mr-4 group-hover:bg-nb-orange group-hover:text-white transition-colors">
+                                <i class="fas fa-cookie-bite"></i>
+                            </div>
+                            <div>
+                                <p class="font-bold text-nb-ink">Granola Bars</p>
+                                <p class="text-xs text-slate-400 font-medium">Snacks • Nature Valley</p>
+                            </div>
+                        </div>
+                        <div class="font-medium text-slate-600 bg-slate-50 inline-block px-3 py-1 rounded-lg w-max">50 boxes</div>
+                        <div class="font-bold text-nb-red flex items-center"><i class="fas fa-exclamation-circle mr-1 text-xs"></i> Tomorrow</div>
+                        <div><span class="bg-nb-orange-soft text-nb-orange px-3 py-1 rounded-full text-xs font-bold">C (Med)</span></div>
+                        <div class="text-right"><button class="text-slate-300 hover:text-nb-blue"><i class="fas fa-chevron-right"></i></button></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View G: Volunteers -->
+            <div id="charity-view-volunteers" class="charity-subview flex-1 overflow-y-auto p-10 pt-2 hidden">
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Active List -->
+                    <div class="bg-white rounded-3xl p-6 shadow-soft border border-slate-100 h-max">
+                        <h3 class="font-display text-xl font-bold mb-6 flex items-center"><span class="w-3 h-3 bg-nb-teal rounded-full mr-3 animate-pulse"></span> Active Now</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between p-3 hover:bg-slate-50 rounded-2xl transition-colors cursor-pointer">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-slate-200 rounded-full border-2 border-white shadow-sm"></div>
+                                    <div class="ml-3">
+                                        <p class="font-bold text-nb-ink">Eric W.</p>
+                                        <p class="text-xs text-slate-400">Driver • Route A</p>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-bold text-nb-teal bg-nb-teal-soft px-2 py-1 rounded-lg">On Route</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 hover:bg-slate-50 rounded-2xl transition-colors cursor-pointer">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-slate-200 rounded-full border-2 border-white shadow-sm"></div>
+                                    <div class="ml-3">
+                                        <p class="font-bold text-nb-ink">Mike R.</p>
+                                        <p class="text-xs text-slate-400">Driver • Route B</p>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-bold text-nb-teal bg-nb-teal-soft px-2 py-1 rounded-lg">On Route</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Approvals -->
+                    <div class="bg-white rounded-3xl p-6 shadow-soft border border-slate-100 h-max">
+                        <h3 class="font-display text-xl font-bold mb-6 text-nb-ink">Pending Approvals</h3>
+                        <div class="space-y-4">
+                             <div class="flex items-center justify-between p-3 bg-nb-bg rounded-2xl">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-slate-200 rounded-full border-2 border-white shadow-sm"></div>
+                                    <div class="ml-3">
+                                        <p class="font-bold text-nb-ink">Sarah J.</p>
+                                        <p class="text-xs text-slate-400">Sorting • 4.5 Hrs</p>
+                                    </div>
+                                </div>
+                                <button class="bg-nb-ink text-white text-xs font-bold px-4 py-2 rounded-full hover:bg-nb-blue transition-colors">Approve</button>
+                            </div>
+                        </div>
+                    </div>
+                 </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- MODAL: PRODUCT INSPECTION -->
+    <!-- ========================================== -->
+    <div id="modal-product" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/30 backdrop-blur-sm transition-opacity" onclick="toggleModal('modal-product')"></div>
+        
+        <div class="bg-white w-full max-w-4xl rounded-[2.5rem] shadow-2xl relative z-10 flex flex-col max-h-[90vh] overflow-hidden transform transition-all scale-100">
+            
+            <!-- Modal Header -->
+            <div class="bg-slate-50 p-8 flex justify-between items-center border-b border-slate-100 shrink-0">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-nb-ink text-white rounded-2xl flex items-center justify-center font-bold mr-4 shadow-lg">1</div>
+                    <div>
+                         <h2 class="font-display text-xl font-bold text-nb-ink">Product Analysis</h2>
+                         <p class="text-xs text-slate-400 font-bold uppercase tracking-wide">Open Food Facts API</p>
+                    </div>
+                </div>
+                <button onclick="toggleModal('modal-product')" class="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:bg-nb-red hover:text-white hover:border-nb-red transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="p-8 overflow-y-auto">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+                    <!-- Image -->
+                    <div class="col-span-1">
+                        <div class="aspect-square bg-nb-bg rounded-3xl flex items-center justify-center relative overflow-hidden border border-slate-100">
+                             <i class="fas fa-box-open text-8xl text-slate-300"></i>
+                             <!-- Badge -->
+                             <div class="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1.5 rounded-full text-xs font-bold shadow-sm flex items-center text-nb-blue">
+                                <i class="fas fa-magic mr-2"></i> AI Scan
+                             </div>
+                             
+                             <div class="absolute bottom-4 left-4 right-4 bg-white p-3 rounded-2xl shadow-sm">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase">Barcode</p>
+                                <p class="font-mono text-sm font-bold text-nb-ink">8076809513</p>
+                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Details -->
+                    <div class="col-span-2 space-y-8">
+                        <div>
+                            <h3 class="font-display text-4xl font-bold text-nb-ink">Granola Bars</h3>
+                            <p class="text-lg text-slate-500 font-medium">Oats & Honey Variety</p>
+                            <div class="flex space-x-2 mt-3">
+                                <span class="px-4 py-1.5 rounded-full bg-nb-bg text-slate-600 text-xs font-bold">Snacks</span>
+                                <span class="px-4 py-1.5 rounded-full bg-nb-bg text-slate-600 text-xs font-bold">Sweet</span>
+                                <span class="px-4 py-1.5 rounded-full bg-nb-bg text-slate-600 text-xs font-bold">Cereals</span>
+                            </div>
+                        </div>
+
+                        <!-- Scores (Circles) -->
+                        <div class="flex space-x-8">
+                            <div class="flex flex-col items-center group cursor-pointer">
+                                <div class="w-20 h-20 rounded-full bg-nb-orange-soft text-nb-orange flex items-center justify-center text-3xl font-display font-bold mb-3 group-hover:scale-110 transition-transform border-4 border-white shadow-lg">C</div>
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">Nutri-Score</span>
+                            </div>
+                            <div class="flex flex-col items-center group cursor-pointer">
+                                <div class="w-20 h-20 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-3xl font-display font-bold mb-3 group-hover:scale-110 transition-transform border-4 border-white shadow-lg">4</div>
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">NOVA</span>
+                            </div>
+                             <div class="flex flex-col items-center group cursor-pointer">
+                                <div class="w-20 h-20 rounded-full bg-nb-teal-soft text-nb-teal flex items-center justify-center text-3xl font-display font-bold mb-3 group-hover:scale-110 transition-transform border-4 border-white shadow-lg">B</div>
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">Eco-Score</span>
+                            </div>
+                        </div>
+
+                        <!-- Alert Box (Rounded) -->
+                        <div class="bg-nb-red-soft/50 rounded-3xl p-6 border border-nb-red-soft flex items-start">
+                            <div class="w-10 h-10 bg-nb-red text-white rounded-full flex items-center justify-center text-lg shrink-0 mr-4 shadow-sm">
+                                <i class="fas fa-exclamation"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-nb-ink text-lg">Allergen Alert</h4>
+                                <p class="text-rose-900/70 text-sm font-medium mt-1">Product contains <strong class="text-nb-red">Peanuts, Almonds, and Milk</strong>. Ensure proper segregation.</p>
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-4 pt-4">
+                            <button class="flex-1 bg-nb-ink text-white py-5 rounded-2xl font-bold shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all">Update Stock</button>
+                            <button class="flex-1 bg-white border border-slate-200 text-slate-700 py-5 rounded-2xl font-bold hover:bg-slate-50 transition-all">Print Label</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- UI LOGIC ---
+
+        function setRole(roleName) {
+            // Hide all role containers
+            document.querySelectorAll('.role-container').forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('flex');
+            });
+
+            // Reset Nav Button Styles
+            document.querySelectorAll('[id^="btn-role-"]').forEach(btn => {
+                btn.classList.remove('bg-nb-ink', 'text-white');
+                btn.classList.add('hover:bg-slate-50');
+            });
+            
+            // Set Active Nav Button
+            const activeBtn = document.getElementById(`btn-role-${roleName}`);
+            if(activeBtn) {
+                activeBtn.classList.add('bg-nb-ink', 'text-white');
+                activeBtn.classList.remove('hover:bg-slate-50');
+            }
+
+            // Show selected role container
+            const selected = document.getElementById(`role-${roleName}`);
+            selected.classList.remove('hidden');
+            if (roleName === 'charity') selected.classList.add('flex');
+
+            // Reset sub-views for clarity
+            if (roleName === 'donor') navDonor('home');
+            if (roleName === 'volunteer') navVol('routes');
+            if (roleName === 'charity') navCharity('dashboard');
+        }
+
+        // DONOR FUNCTIONS
+        function navDonor(view) {
+            document.getElementById('donor-view-home').classList.add('hidden');
+            document.getElementById('donor-view-create').classList.add('hidden');
+            
+            if(view === 'home') document.getElementById('donor-view-home').classList.remove('hidden');
+            if(view === 'create') document.getElementById('donor-view-create').classList.remove('hidden');
+        }
+
+        function switchDonorTab(tab) {
+            const bg = document.getElementById('donor-tab-bg');
+            const btnNearby = document.getElementById('donor-tab-nearby');
+            const btnMy = document.getElementById('donor-tab-myitems');
+            const feedNearby = document.getElementById('donor-feed-nearby');
+            const feedMy = document.getElementById('donor-feed-myitems');
+
+            if(tab === 'nearby') {
+                bg.style.transform = 'translateX(0%)';
+                btnNearby.classList.add('text-white');
+                btnNearby.classList.remove('text-slate-500', 'hover:text-nb-blue');
+                btnMy.classList.remove('text-white');
+                btnMy.classList.add('text-slate-500', 'hover:text-nb-blue');
+                feedNearby.classList.remove('hidden');
+                feedMy.classList.add('hidden');
+            } else {
+                bg.style.transform = 'translateX(100%)'; /* Moves based on relative width logic, roughly */
+                /* Since I used width calc(50% - 6px), simple translate 100% might be slightly off visually due to gap/padding but for MVP boilerplate it's fine. 
+                   Actually for absolute positioning in flex, usually better to toggle classes. 
+                   Let's keep it simple with class toggles for text color. */
+                // Fix for the BG slider logic requires strict width. For boilerplate, I'll just rely on text color mainly.
+                bg.style.left = 'auto';
+                bg.style.right = '0.375rem'; // 1.5 padding
+
+                btnMy.classList.add('text-white');
+                btnMy.classList.remove('text-slate-500', 'hover:text-nb-blue');
+                btnNearby.classList.remove('text-white');
+                btnNearby.classList.add('text-slate-500', 'hover:text-nb-blue');
+                feedNearby.classList.add('hidden');
+                feedMy.classList.remove('hidden');
+            }
+        }
+
+        // VOLUNTEER FUNCTIONS
+        function navVol(view) {
+            document.getElementById('vol-view-routes').classList.add('hidden');
+            document.getElementById('vol-view-active').classList.add('hidden');
+            
+            if(view === 'routes') document.getElementById('vol-view-routes').classList.remove('hidden');
+            if(view === 'active') document.getElementById('vol-view-active').classList.remove('hidden');
+        }
+
+        // CHARITY FUNCTIONS
+        function navCharity(view) {
+            // Hide all subviews
+            document.querySelectorAll('.charity-subview').forEach(el => el.classList.add('hidden'));
+            // Show target
+            document.getElementById(`charity-view-${view}`).classList.remove('hidden');
+
+            // Update Sidebar Styles
+            document.querySelectorAll('[id^="charity-nav-"]').forEach(btn => {
+                btn.classList.remove('bg-nb-blue', 'text-white', 'shadow-md');
+                btn.classList.add('text-slate-500', 'hover:bg-slate-50', 'hover:text-nb-blue');
+            });
+            
+            const activeBtn = document.getElementById(`charity-nav-${view}`);
+            if(activeBtn) {
+                activeBtn.classList.add('bg-nb-blue', 'text-white', 'shadow-md');
+                activeBtn.classList.remove('text-slate-500', 'hover:bg-slate-50', 'hover:text-nb-blue');
+            }
+
+            // Update Header Title
+            const titles = {
+                'dashboard': 'Dashboard',
+                'inventory': 'Inventory Log',
+                'volunteers': 'Volunteer Roster'
+            };
+            document.getElementById('charity-header-title').innerText = titles[view];
+        }
+
+        // GLOBAL MODAL
+        function toggleModal(id) {
+            document.getElementById(id).classList.toggle('hidden');
+        }
+
+        // Initialize
+        setRole('donor');
+    </script>
+</body>
+</html>
