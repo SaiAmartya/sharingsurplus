@@ -38,11 +38,10 @@ export interface Donation {
   donorId: string;
   title: string;
   description: string;
-  weight: number; // in kg
-  weightUnit: 'kg' | 'lbs';
+  weight: number; // in kg or count
+  weightUnit: 'kg' | 'lbs' | 'items';
   expiryDate: Timestamp;
   pickupWindow: string; // e.g., "Today 2-4pm"
-  photoUrl?: string;
   status: 'available' | 'claimed' | 'picked_up' | 'delivered';
   createdAt: Timestamp;
   location: {
@@ -59,6 +58,20 @@ export interface UrgentRequest {
   urgency: 'high' | 'medium' | 'low';
   status: 'open' | 'fulfilled';
   createdAt: Timestamp;
+}
+
+export interface InventoryItem {
+  id?: string;
+  foodBankId: string;
+  productName: string;
+  brand: string;
+  quantity: number;
+  barcode: string;
+  nutriScore: string;
+  allergens: string[];
+  expiryDate: Timestamp;
+  createdAt: Timestamp;
+  imageUrl?: string | null;
 }
 
 export interface Route {
@@ -78,17 +91,4 @@ export interface Route {
   status: 'pending' | 'in_progress' | 'completed';
   estimatedTime: number; // minutes
   totalWeight: number;
-}
-
-export interface InventoryItem {
-  id?: string;
-  foodBankId: string;
-  productName: string;
-  brand: string;
-  quantity: number;
-  expiryDate: Timestamp;
-  barcode?: string;
-  nutriScore?: string;
-  allergens?: string[];
-  locationInWarehouse?: string;
 }
