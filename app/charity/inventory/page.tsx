@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, query, orderBy, onSnapshot, deleteDoc, doc, Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, deleteDoc, doc, Timestamp, where } from 'firebase/firestore';
+import ProductModal from '@/app/components/ProductModal';
+import { ProductData } from '@/lib/openfoodfacts';
+import { useAuth } from '@/app/context/AuthContext';
 
 interface InventoryItem {
   id: string;
@@ -13,15 +16,24 @@ interface InventoryItem {
   expiryDate: Timestamp;
   imageUrl?: string;
   barcode: string;
+  category?: string;
 }
 
 export default function CharityInventory() {
+  const { user } = useAuth();
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
 
   useEffect(() => {
+    if (!user) return;
+
     // Subscribe to real-time updates
-    const q = query(collection(db, "inventory"), orderBy("createdAt", "desc"));
+    const q = query(
+      collection(db, "inventory"), 
+      where("foodBankId", "==", user.uid),
+      orderBy("createdAt", "desc")
+    );
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const items = snapshot.docs.map(doc => ({
         id: doc.id,
@@ -32,7 +44,7 @@ export default function CharityInventory() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [user]);
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation(); // Prevent row click if we add one later
@@ -44,6 +56,11 @@ export default function CharityInventory() {
         alert("Failed to remove item.");
       }
     }
+  };
+
+  const handleEdit = (e: React.MouseEvent, item: InventoryItem) => {
+    e.stopPropagation();
+    setEditingItem(item);
   };
 
   const getScoreColor = (score: string) => {
@@ -128,7 +145,14 @@ export default function CharityInventory() {
               </div>
 
               {/* Action */}
-              <div className="text-right">
+              <div className="text-right flex justify-end gap-2">
+                  <button 
+                    onClick={(e) => handleEdit(e, item)}
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:bg-nb-blue-soft hover:text-nb-blue transition-colors"
+                    title="Edit Item"
+                  >
+                      <i className="fas fa-pen"></i>
+                  </button>
                   <button 
                     onClick={(e) => handleDelete(e, item.id)}
                     className="w-8 h-8 rounded-full flex items-center justify-center text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors"
@@ -139,6 +163,24 @@ export default function CharityInventory() {
               </div>
           </div>
         ))}
+
+        {editingItem && (
+            <ProductModal
+                product={{
+                    product_name: editingItem.productName,
+                    brands: editingItem.brand,
+                    categories: editingItem.category,
+                    nutriscore_grade: editingItem.nutriScore,
+                    image_url: editingItem.imageUrl,
+                    code: editingItem.barcode
+                }}
+                barcode={editingItem.barcode}
+                onClose={() => setEditingItem(null)}
+                inventoryId={editingItem.id}
+                initialExpiryDate={editingItem.expiryDate?.toDate()}
+                initialQuantity={editingItem.quantity}
+            />
+        )}
     </div>
   );
 }
