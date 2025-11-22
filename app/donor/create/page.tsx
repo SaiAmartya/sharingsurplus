@@ -47,6 +47,13 @@ export default function CreateDonation() {
           } else if (profile.role !== "donor") {
             await createUserProfile(currentUser, "donor", { role: "donor" });
           }
+
+          if (profile?.pickupAddress || profile?.location?.address) {
+            setFormData(prev => ({ 
+              ...prev, 
+              address: profile.pickupAddress || profile.location?.address || prev.address 
+            }));
+          }
         } catch (err) {
           console.error("Profile error:", err);
         }
