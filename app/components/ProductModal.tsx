@@ -3,16 +3,19 @@
 import { useState } from 'react';
 import { ProductData } from '@/lib/openfoodfacts';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc, Timestamp } from 'firebase/firestore';
 import { useAuth } from '@/app/context/AuthContext';
 
 interface ProductModalProps {
   product: ProductData;
   barcode: string;
   onClose: () => void;
+  inventoryId?: string;
+  initialExpiryDate?: Date;
+  initialQuantity?: number;
 }
 
-export default function ProductModal({ product, barcode, onClose }: ProductModalProps) {
+export default function ProductModal({ product, barcode, onClose, inventoryId, initialExpiryDate, initialQuantity }: ProductModalProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   
@@ -20,6 +23,7 @@ export default function ProductModal({ product, barcode, onClose }: ProductModal
   const [productName, setProductName] = useState(product.product_name || '');
   const [brand, setBrand] = useState(product.brands || '');
   const [quantity, setQuantity] = useState(() => {
+    if (initialQuantity !== undefined) return initialQuantity;
     // Try to parse a number from the quantity string if it exists
     if (product.quantity) {
       const parsed = parseInt(product.quantity);
@@ -29,10 +33,12 @@ export default function ProductModal({ product, barcode, onClose }: ProductModal
   });
   const [category, setCategory] = useState(product.categories || '');
   
-  // Default expiry to 1 week from now
+  // Default expiry to 1 week from now or initialExpiryDate
   const [expiryDate, setExpiryDate] = useState(() => {
-    const date = new Date();
-    date.setDate(date.getDate() + 7);
+    const date = initialExpiryDate ? new Date(initialExpiryDate) : new Date();
+    if (!initialExpiryDate) {
+        date.setDate(date.getDate() + 7);
+    }
     return date.toISOString().split('T')[0];
   });
 
@@ -52,7 +58,12 @@ export default function ProductModal({ product, barcode, onClose }: ProductModal
     try {
       const userId = user.uid; 
       
-      await addDoc(collection(db, 'inventory'), {
+      // Create a date object that corresponds to the selected date in local time
+      // We append T12:00:00 to ensure it's treated as noon local time, avoiding timezone shifts
+      // when converting to UTC (which Firestore uses)
+      const localDate = new Date(expiryDate + 'T12:00:00');
+
+      const itemData = {
         foodBankId: userId,
         productName: productName || 'Unknown Product',
         brand: brand || 'Unknown Brand',
@@ -62,10 +73,20 @@ export default function ProductModal({ product, barcode, onClose }: ProductModal
         // nutriScore removed from UI, saving original if available or null
         nutriScore: product.nutriscore_grade || null, 
         allergens: product.allergens_tags || [],
-        expiryDate: Timestamp.fromDate(new Date(expiryDate)),
-        createdAt: Timestamp.now(),
+        expiryDate: Timestamp.fromDate(localDate),
         imageUrl: product.image_url || null
-      });
+      };
+
+      if (inventoryId) {
+        // Update existing item
+        await updateDoc(doc(db, 'inventory', inventoryId), itemData);
+      } else {
+        // Add new item
+        await addDoc(collection(db, 'inventory'), {
+            ...itemData,
+            createdAt: Timestamp.now(),
+        });
+      }
       onClose();
     } catch (error) {
       console.error("Error saving to inventory:", error);
@@ -81,7 +102,7 @@ export default function ProductModal({ product, barcode, onClose }: ProductModal
       
       <div className="bg-white w-full max-w-lg rounded-[2rem] shadow-2xl relative z-10 flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in duration-200">
         <div className="bg-white p-6 flex justify-between items-center border-b border-slate-100 sticky top-0 z-20">
-          <h2 className="font-display text-xl font-bold text-nb-ink">Add to Inventory</h2>
+          <h2 className="font-display text-xl font-bold text-nb-ink">{inventoryId ? 'Edit Item' : 'Add to Inventory'}</h2>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center hover:bg-slate-200 transition-colors">
             <i className="fas fa-times"></i>
           </button>
@@ -169,7 +190,8 @@ export default function ProductModal({ product, barcode, onClose }: ProductModal
                 type="date" 
                 value={expiryDate} 
                 onChange={(e) => setExpiryDate(e.target.value)}
-                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-display font-bold text-lg outline-none text-nb-ink focus:border-nb-blue transition-colors mb-4" 
+                onClick={(e) => e.currentTarget.showPicker()}
+                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 font-display font-bold text-lg outline-none text-nb-ink focus:border-nb-blue transition-colors mb-4 cursor-pointer" 
             />
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
                 <button onClick={() => addDays(3)} className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:border-nb-blue hover:text-nb-blue transition-colors whitespace-nowrap">+3 Days</button>

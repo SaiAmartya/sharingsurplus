@@ -80,6 +80,15 @@ export default function BarcodeScanner({ onDetected, onProductFound, onClose }: 
       isMounted = false;
       Quagga.offDetected(handleDetected);
       Quagga.stop();
+      
+      // Explicitly stop all video tracks to ensure camera turns off
+      if (scannerRef.current) {
+        const video = scannerRef.current.querySelector('video');
+        if (video && video.srcObject) {
+          const stream = video.srcObject as MediaStream;
+          stream.getTracks().forEach(track => track.stop());
+        }
+      }
     };
   }, []); // Run once on mount
 
