@@ -21,6 +21,8 @@ export default function BarcodeScanner({ onDetected, onClose }: BarcodeScannerPr
   };
 
   useEffect(() => {
+    let isMounted = true; // Track if the component is still on screen
+
     if (!scannerRef.current) return;
 
     Quagga.init({
@@ -29,13 +31,13 @@ export default function BarcodeScanner({ onDetected, onClose }: BarcodeScannerPr
         type: "LiveStream",
         target: scannerRef.current,
         constraints: {
-          facingMode: "environment", // Use rear camera on mobile
+          facingMode: "environment",
           width: 640,
           height: 480,
         },
       },
       decoder: {
-        readers: ["ean_reader", "upc_reader", "upc_e_reader"], // Common food barcodes
+        readers: ["ean_reader", "upc_reader", "upc_e_reader"],
       },
       locate: true,
     }, (err) => {
@@ -43,19 +45,29 @@ export default function BarcodeScanner({ onDetected, onClose }: BarcodeScannerPr
         console.error("Error starting Quagga:", err);
         return;
       }
-      Quagga.start();
+      
+      // FIX: Only start the camera if the user hasn't closed the modal yet
+      if (isMounted) {
+        Quagga.start();
+      } else {
+        // If they closed it while loading, make sure to stop it immediately
+        Quagga.stop();
+      }
     });
 
     const handleDetected = (result: any) => {
       if (result?.codeResult?.code) {
-        Quagga.stop();
-        onDetected(result.codeResult.code);
+        if (isMounted) {
+            Quagga.stop();
+            onDetected(result.codeResult.code);
+        }
       }
     };
 
     Quagga.onDetected(handleDetected);
 
     return () => {
+      isMounted = false; // Mark as closed
       Quagga.offDetected(handleDetected);
       Quagga.stop();
     };
