@@ -48,6 +48,8 @@ export default function CreateDonation() {
           }
         } catch (err) {
           console.error("Error checking user profile:", err);
+          
+
         }
       }
     });
