@@ -65,10 +65,7 @@ export default function DonorDashboard() {
     <div className="pb-32 pt-12 px-6 max-w-lg mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <div className="flex justify-between items-start mb-6">
-             <Link href="/" className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-400 hover:text-nb-ink shadow-sm transition-colors">
-                <i className="fas fa-arrow-left"></i>
-            </Link>
+        <div className="flex justify-end items-start mb-6">
             <div className="w-10 h-10 bg-nb-ink text-white rounded-full flex items-center justify-center font-bold">
                 {userProfile?.displayName ? userProfile.displayName.charAt(0) : 'D'}
             </div>

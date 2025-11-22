@@ -60,6 +60,20 @@ export interface UrgentRequest {
   createdAt: Timestamp;
 }
 
+export interface InventoryItem {
+  id?: string;
+  foodBankId: string;
+  productName: string;
+  brand: string;
+  quantity: number;
+  barcode: string;
+  nutriScore: string;
+  allergens: string[];
+  expiryDate: Timestamp;
+  createdAt: Timestamp;
+  imageUrl?: string | null;
+}
+
 export interface Route {
   id?: string;
   volunteerId: string;
@@ -77,17 +91,4 @@ export interface Route {
   status: 'pending' | 'in_progress' | 'completed';
   estimatedTime: number; // minutes
   totalWeight: number;
-}
-
-export interface InventoryItem {
-  id?: string;
-  foodBankId: string;
-  productName: string;
-  brand: string;
-  quantity: number;
-  expiryDate: Timestamp;
-  barcode?: string;
-  nutriScore?: string;
-  allergens?: string[];
-  locationInWarehouse?: string;
 }
