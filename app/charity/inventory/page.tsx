@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, query, orderBy, onSnapshot, deleteDoc, doc, Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, deleteDoc, doc, Timestamp, where } from 'firebase/firestore';
 import ProductModal from '@/app/components/ProductModal';
 import { ProductData } from '@/lib/openfoodfacts';
+import { useAuth } from '@/app/context/AuthContext';
 
 interface InventoryItem {
   id: string;
@@ -19,13 +20,20 @@ interface InventoryItem {
 }
 
 export default function CharityInventory() {
+  const { user } = useAuth();
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
 
   useEffect(() => {
+    if (!user) return;
+
     // Subscribe to real-time updates
-    const q = query(collection(db, "inventory"), orderBy("createdAt", "desc"));
+    const q = query(
+      collection(db, "inventory"), 
+      where("foodBankId", "==", user.uid),
+      orderBy("createdAt", "desc")
+    );
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const items = snapshot.docs.map(doc => ({
         id: doc.id,
@@ -36,7 +44,7 @@ export default function CharityInventory() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [user]);
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation(); // Prevent row click if we add one later
