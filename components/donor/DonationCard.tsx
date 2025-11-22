@@ -22,9 +22,6 @@ export default function DonationCard({ donation }: DonationCardProps) {
 
   return (
     <div className="nb-card p-4 flex items-stretch">
-      <div className="w-24 bg-slate-100 rounded-2xl flex items-center justify-center shrink-0">
-        <i className="fas fa-box text-3xl text-slate-400"></i>
-      </div>
       <div className="p-4 flex-1">
         <h3 className="font-display text-lg font-bold text-nb-ink">{donation.title}</h3>
         <p className="text-slate-500 text-sm">Expires: {formatDate(donation.expiryDate)}</p>
