@@ -1,10 +1,58 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { auth, db } from "@/lib/firebase";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { collection, query, where, onSnapshot, orderBy } from "firebase/firestore";
+import { Donation, UserProfile } from "@/types/schema";
+import DonationCard from "@/components/donor/DonationCard";
+import { getUserProfile } from "@/lib/auth-helpers";
 
 export default function DonorDashboard() {
   const [activeTab, setActiveTab] = useState<'nearby' | 'myitems'>('nearby');
+  const [user, setUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [myDonations, setMyDonations] = useState<Donation[]>([]);
+  const [loadingDonations, setLoadingDonations] = useState(true);
+
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        const profile = await getUserProfile(currentUser.uid);
+        setUserProfile(profile);
+      }
+    });
+    return () => unsubscribeAuth();
+  }, []);
+
+  useEffect(() => {
+    if (user && userProfile) {
+      setLoadingDonations(true);
+      const q = query(
+        collection(db, "donations"),
+        where("donorId", "==", user.uid),
+        orderBy("createdAt", "desc")
+      );
+      const unsubscribeDonations = onSnapshot(q, (snapshot) => {
+        const donationsList = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Donation[];
+        setMyDonations(donationsList);
+        setLoadingDonations(false);
+      }, (error) => {
+        console.error("Error fetching my donations:", error);
+        setLoadingDonations(false);
+      });
+
+      return () => unsubscribeDonations();
+    } else if (!user) {
+      setMyDonations([]); // Clear donations if logged out
+      setLoadingDonations(false);
+    }
+  }, [user, userProfile]);
 
   return (
     <div className="pb-32 pt-12 px-6 max-w-lg mx-auto">
@@ -15,7 +63,7 @@ export default function DonorDashboard() {
                 <i className="fas fa-arrow-left"></i>
             </Link>
             <div className="w-10 h-10 bg-nb-ink text-white rounded-full flex items-center justify-center font-bold">
-                D
+                {userProfile?.displayName ? userProfile.displayName.charAt(0) : 'D'}
             </div>
         </div>
 
@@ -40,7 +88,7 @@ export default function DonorDashboard() {
               activeTab === 'myitems' ? 'bg-nb-ink text-white shadow-md' : 'text-slate-500 hover:text-nb-blue'
             }`}
           >
-            My Listings
+            My Listings ({myDonations.length})
           </button>
         </div>
       </div>
@@ -82,17 +130,22 @@ export default function DonorDashboard() {
             </div>
           </>
         ) : (
-          <div className="nb-card p-1.5 flex items-stretch opacity-60">
-            <div className="w-24 bg-slate-100 rounded-2xl flex items-center justify-center shrink-0">
-                <i className="fas fa-bread-slice text-3xl text-slate-400"></i>
+          <div className="space-y-4">
+            {loadingDonations ? (
+              <div className="text-center py-8">
+                <i className="fas fa-spinner fa-spin text-3xl text-nb-blue mb-4"></i>
+                <p className="text-slate-500">Loading your donations...</p>
             </div>
-            <div className="p-4 flex-1">
-                <h3 className="font-display text-lg font-bold text-slate-500">Sourdough Bread</h3>
-                <p className="text-slate-400 text-sm">Picked up by Mike</p>
-                <div className="mt-3">
-                    <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg">Completed</span>
+            ) : myDonations.length > 0 ? (
+              myDonations.map((donation) => (
+                <DonationCard key={donation.id} donation={donation} />
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-slate-500">You haven't posted any donations yet.</p>
+                <Link href="/donor/create" className="mt-4 inline-block text-nb-blue hover:underline">Create a new donation</Link>
                 </div>
-            </div>
+            )}
           </div>
         )}
       </div>
