@@ -115,6 +115,7 @@ export default function CreateDonation() {
       router.push("/donor");
     } catch (err: any) {
       setError(err.message);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setLoading(false);
     }
@@ -133,7 +134,7 @@ export default function CreateDonation() {
     );
 
   return (
-    <div className="bg-white min-h-screen px-6 pt-12 pb-10 max-w-lg mx-auto">
+    <div className="bg-white px-6 pt-12 pb-10 max-w-lg mx-auto rounded-3xl border-2 border-slate-100 shadow-sm my-6">
       <div className="flex items-center justify-between mb-8">
         <Link
           href="/donor"
