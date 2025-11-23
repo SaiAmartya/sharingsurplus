@@ -1,7 +1,5 @@
 # SharingSurplus AI
 
----
-
 ## The Team
 **Ishaan Dhiman** • **Sai Amartya Balamurugan Lakshmipraba** • **Aamirali Tinwala** • **Dhairya Shah** • **Dhanika Botejue** • **Skyler Yoo**
 
