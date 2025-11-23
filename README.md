@@ -1,7 +1,5 @@
 # SharingSurplus AI
 
-> **Bridging the gap between surplus food and community needs through AI-driven logistics.**
-
 ---
 
 ## The Team
