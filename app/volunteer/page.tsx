@@ -205,7 +205,7 @@ export default function VolunteerRoutes() {
                                 <div className={`absolute -left-[27px] top-1 w-5 h-5 ${stop.type === 'pickup' ? 'bg-white border-4 border-nb-ink' : 'bg-nb-ink'} rounded-full ${stop.type === 'dropoff' ? 'shadow-sm' : ''}`}></div>
                                 <div>
                                     <h4 className="font-bold text-nb-ink text-lg">{stop.name}</h4>
-                                    <p className="text-sm text-slate-500">{stop.description}</p>
+                                    {/* Description removed as requested */}
                                     <span className="text-xs text-slate-400 font-mono">{stop.estimatedArrival}</span>
                                     <div className="flex items-center gap-2 text-xs font-bold mt-1">
                                         <span className="text-slate-400 uppercase tracking-wide">Contact</span>

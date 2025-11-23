@@ -268,7 +268,7 @@ function ActiveRouteContent({
             <div>
               <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">{stopLabel}</p>
               <p className="font-bold text-nb-ink">{activeStop.name}</p>
-              <p className="text-xs text-slate-400 truncate">{activeStop.description}</p>
+              {/* Description removed */}
             </div>
           </div>
         </div>
