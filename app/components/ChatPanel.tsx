@@ -306,12 +306,37 @@ const ChatPanel = () => {
   }, [user]);
 
   const systemPrompt = useMemo(() => {
-    const mission = "You are Shurplus Operations Copilot, orchestrating food bank logistics, inventory, meal planning, and volunteer workflows.";
+    const mission =
+      "You are Shurplus Logistics Copilot, an intelligent assistant for food bank operations. Your goal is to help manage inventory, logistics, volunteers, and meal planning efficiently.";
     const guardrails = [
       "Prefer issuing structured tool calls for CRUD actions or to log insights in CREATE_MEMORY.",
       "Ask clarifying questions when information is missing rather than guessing.",
-      "Keep responses concise, action-oriented, and focused on next best steps."
+      "Keep responses concise, action-oriented, and focused on next best steps.",
+      "When executing tool calls, provide a brief, natural language confirmation of what you are doing.",
+      "Use the Context_TOON data to ground your answers about current inventory, recipes, volunteers, and logistics.",
+      "If a user's request is ambiguous, ask for clarification before acting."
     ];
+
+    const fewShotExamples = `
+Few-Shot Examples:
+
+User: "We received 50 lbs of carrots today."
+Model: "I'll add those carrots to your inventory right away."
+Tool Call: CREATE_ITEM({ productName: "Carrots", quantity: 50, unitSize: "lbs", category: "produce" })
+
+User: "I need a recipe for all this spinach."
+Model: "I can help with that. Let me generate a meal plan that uses a large amount of spinach from your inventory."
+Tool Call: CREATE_RECIPE({ notes: "Focus on using surplus spinach" })
+
+User: "Who is volunteering today?"
+Model: "Let me check the volunteer roster for you."
+(Refers to Context_TOON volunteers data)
+Model: "You have 3 volunteers scheduled: Alice, Bob, and Charlie."
+
+User: "Log a memory that we are low on rice."
+Model: "I'll make a note of that for future reference."
+Tool Call: CREATE_MEMORY({ note: "Low on rice stock", category: "inventory" })
+`;
 
     const contextPayload = {
       snapshot: {
@@ -340,7 +365,7 @@ const ChatPanel = () => {
     const toonBlock = encodeToon(contextPayload);
     const guardrailText = guardrails.map((line) => `- ${line}`).join("\n");
 
-    return `${mission}\nGuardrails:\n${guardrailText}\nContext_TOON:\n${toonBlock}`;
+    return `${mission}\n\nGuardrails:\n${guardrailText}\n${fewShotExamples}\n\nContext_TOON:\n${toonBlock}`;
   }, [inventory, recipes, volunteers, logistics, profile, memories]);
 
   const heroStats = useMemo(
@@ -366,6 +391,10 @@ const ChatPanel = () => {
       if (!systemPrompt) {
         throw new Error("System prompt is not ready yet.");
       }
+
+      console.log("--- FULL SYSTEM PROMPT ---");
+      console.log(systemPrompt);
+      console.log("--------------------------");
 
       const response = await fetch("/api/chat", {
         method: "POST",
@@ -587,10 +616,23 @@ const ChatPanel = () => {
     async (conversation: ChatMessage[]) => {
       setIsProcessing(true);
       let workingConversation = [...conversation];
+      const MAX_TURNS = 5;
+      let turnCount = 0;
 
       try {
-        while (true) {
+        while (turnCount < MAX_TURNS) {
+          turnCount++;
           const response = await callModel(workingConversation);
+
+          if (response.text) {
+            const assistantMessage: ChatMessage = {
+              id: crypto.randomUUID(),
+              role: "model",
+              content: response.text
+            };
+            workingConversation = [...workingConversation, assistantMessage];
+            appendMessage(assistantMessage);
+          }
 
           if (response.functionCalls && response.functionCalls.length > 0) {
             for (const call of response.functionCalls) {
@@ -634,15 +676,6 @@ const ChatPanel = () => {
             continue;
           }
 
-          if (response.text) {
-            const assistantMessage: ChatMessage = {
-              id: crypto.randomUUID(),
-              role: "model",
-              content: response.text
-            };
-            workingConversation = [...workingConversation, assistantMessage];
-            appendMessage(assistantMessage);
-          }
           break;
         }
       } catch (error) {
@@ -714,7 +747,7 @@ const ChatPanel = () => {
       case "DELETE_ITEM":
         return `Removing inventory item ${rawArgs.id ?? ""}`.trim();
       case "CREATE_RECIPE":
-        return `Generating a meal plan${rawArgs.notes ? ` (${rawArgs.notes})` : ""}`;
+        return "Analyzing inventory to design a meal plan...";
       case "MANAGE_VOLUNTEER":
         return `${rawArgs.action ? rawArgs.action.toString().toUpperCase() : "Managing"} volunteer ${
           (rawArgs.payload as Record<string, unknown> | undefined)?.name || rawArgs.volunteerId || ""
@@ -840,29 +873,45 @@ const ChatPanel = () => {
                   ? "success"
                   : "error"
                 : "pending";
+
+              const isRecipeAgent = message.name === "CREATE_RECIPE";
+              const containerClasses = isRecipeAgent
+                ? "bg-gradient-to-br from-violet-50 to-white border-violet-100 shadow-sm"
+                : "bg-slate-50 border-slate-200";
+
+              const labelText = isRecipeAgent ? "Meal Planning Agent" : formatToolLabel(message.name);
+              const labelColor = isRecipeAgent ? "text-violet-600" : "text-slate-500";
               const statusLabel =
-                status === "pending" ? "In progress" : status === "success" ? "Complete" : "Needs attention";
+                status === "pending" ? "Working..." : status === "success" ? "Done" : "Failed";
 
               return (
-                <div key={message.id} className="flex items-start gap-3">
+                <div key={message.id} className="flex items-start gap-3 my-2">
                   {renderStatusIcon(status)}
-                  <div className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                    <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                      <span>{formatToolLabel(message.name)}</span>
+                  <div className={`flex-1 rounded-2xl border px-4 py-3 ${containerClasses}`}>
+                    <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider">
+                      <span className={`flex items-center gap-2 ${labelColor}`}>
+                        {isRecipeAgent && (
+                          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-violet-100 text-violet-600 text-[10px]">
+                            ✦
+                          </span>
+                        )}
+                        {labelText}
+                      </span>
                       <span
-                        className={
+                        className={`text-[10px] ${
                           status === "success"
-                            ? "text-emerald-600"
+                            ? "text-emerald-600 opacity-80"
                             : status === "error"
                               ? "text-nb-red"
-                              : "text-slate-500"
-                        }
+                              : "text-slate-400"
+                        }`}
                       >
                         {statusLabel}
                       </span>
                     </div>
-                    <p className="mt-1 text-sm font-medium text-slate-700">{describeAction(message.name, args)}</p>
-                    <p className="text-[11px] text-slate-500 mt-1">{formatArgsPreview(args)}</p>
+                    <p className="mt-2 text-sm font-medium text-slate-700 leading-snug">
+                      {describeAction(message.name, args)}
+                    </p>
                   </div>
                 </div>
               );

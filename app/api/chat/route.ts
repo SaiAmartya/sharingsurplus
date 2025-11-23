@@ -133,7 +133,7 @@ const toolDeclarations: FunctionDeclaration[] = [
   },
   {
     name: "CREATE_MEMORY",
-    description: "Store an operational memory for future recommendations.",
+    description: "Store an operational memory for future recommendations (eg. the food bank frequently runs out of canned tuna).",
     parametersJsonSchema: {
       type: "object",
       properties: {
@@ -216,8 +216,7 @@ export async function POST(req: Request) {
         topP: 0.8,
         toolConfig: {
           functionCallingConfig: {
-            mode: FunctionCallingConfigMode.ANY,
-            allowedFunctionNames: toolDeclarations.map((tool) => tool.name ?? "")
+            mode: FunctionCallingConfigMode.AUTO,
           }
         },
         tools: [{ functionDeclarations: toolDeclarations }]
