@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -52,10 +53,6 @@ export default function CharityDashboard() {
 
   return (
     <>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="font-display text-3xl font-bold text-nb-ink">Dashboard</h1>
-      </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
