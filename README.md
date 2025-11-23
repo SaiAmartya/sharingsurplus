@@ -1,7 +1,12 @@
-# Surplus
+# Shurplus
 
 ## The Team
-**Ishaan Dhiman** • **Sai Amartya Balamurugan Lakshmipraba** • **Aamirali Tinwala** • **Dhairya Shah** • **Dhanika Botejue** • **Skyler Yoo**
+- **Ishaan Dhiman**
+- **Sai Amartya Balamurugan Lakshmipraba**
+- **Aamirali Tinwala**
+- **Dhairya Shah**
+- **Dhanika Botejue**
+- **Skyler Yoo**
 
 ---
 
@@ -18,7 +23,7 @@ Charities are overwhelmed by:
 ---
 
 ## The Solution
-**Surplus** is a dual-engine platform designed to bridge this gap:
+**Shurplus** is a dual-engine platform designed to bridge this gap:
 
 ### 1. The Marketplace
 Operates like a "Facebook Marketplace" for food rescue:
@@ -52,12 +57,13 @@ Three intelligent agents work in the background to streamline operations:
 ---
 
 ## Challenges & Lessons Learned
-Building SharingSurplus presented several technical and logistical hurdles:
+Building Shurplus presented several technical and logistical hurdles:
 
 *   **Version Control & Collaboration:** Managing a fast-paced codebase with 6 developers required strict coordination to avoid merge conflicts.
 *   **AI Vision Integration:** We had to pivot between SDKs to ensure reliable barcode and image recognition.
 *   **Data Security:** Designing complex Firestore rules was essential to keep Donor, Volunteer, and Food Bank data secure yet interconnected.
 *   **Prompt Engineering:** Teaching the AI to distinguish between "500 units" and "500 grams" was critical for accurate meal planning.
+*   **AI Calibration for Storage:** Calibrating the AI to accurately estimate storage needs and distribution logistics required iterative testing.
 *   **Smart Routing Logic:** We implemented real-time geolocation filtering and route optimization to ensure efficient delivery paths.
 *   **API Optimization:** We optimized the geocoding process to deliver precise coordinates for AI routing without triggering excessive API calls on every keystroke.
 *   **Live Data Integration:** Transitioning from static mock data to real-time Firestore streams required robust error handling and state management.
@@ -77,15 +83,56 @@ Building SharingSurplus presented several technical and logistical hurdles:
 
 ## Getting Started
 
-1.  **Clone the repo**
-2.  **Install dependencies:**
+### Prerequisites
+*   **Node.js:** v18.17 or higher (v20+ recommended)
+*   **npm** or **yarn**
+
+### Installation
+
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/SaiAmartya/sharingsurplus.git
+    cd sharingsurplus
+    ```
+
+2.  **Install dependencies**
     ```bash
     npm install
     ```
-3.  **Set up environment variables:**
-    Create a `.env.local` file with your Firebase and Google API keys.
-4.  **Run the app:**
+
+3.  **Firebase Setup**
+    *   Go to the [Firebase Console](https://console.firebase.google.com/).
+    *   Create a new project.
+    *   **Authentication:** Enable **Google** and **Email/Password** providers.
+    *   **Firestore Database:** Create a database (start in test mode for development).
+    *   **Project Settings:** Go to General > Your apps > Web app. Register the app and copy the `firebaseConfig` object.
+
+4.  **Google APIs Setup**
+    *   **Gemini AI:** Get an API key from [Google AI Studio](https://aistudio.google.com/).
+    *   **Google Maps:**
+        *   Go to [Google Cloud Console](https://console.cloud.google.com/).
+        *   Enable **Maps JavaScript API**, **Places API**, and **Distance Matrix API**.
+        *   Create an API Key.
+
+5.  **Environment Variables**
+    Create a `.env.local` file in the root directory and add the following keys:
+
+    ```env
+    # Firebase Configuration
+    NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project_id.firebasestorage.app
+    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+    NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+
+    # AI & Maps
+    GOOGLE_API_KEY=your_gemini_api_key
+    MAPS_API=your_google_maps_api_key
+    ```
+
+6.  **Run the development server**
     ```bash
     npm run dev
     ```
-
+    
