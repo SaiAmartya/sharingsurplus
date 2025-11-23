@@ -365,7 +365,7 @@ function ActiveRouteContent({
                 <>
                   {/* Pickup Form */}
                   <div>
-                    <label className="block text-sm font-bold text-nb-ink mb-2">Recorded Weight (lbs)</label>
+                    <label className="block text-sm font-bold text-nb-ink mb-2">Recorded Weight (kg)</label>
                     <div className="relative">
                       <input
                         type="number"
@@ -374,7 +374,7 @@ function ActiveRouteContent({
                         placeholder="e.g. 45"
                         className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-nb-blue/20 focus:border-nb-blue transition-all font-bold text-lg"
                       />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">lbs</span>
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">kg</span>
                     </div>
                     <p className="text-xs text-slate-400 mt-2">Approximate weight is fine.</p>
                   </div>
