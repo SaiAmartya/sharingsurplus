@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useState, useEffect, ChangeEvent, FormEvent } from 'react';
@@ -170,7 +171,7 @@ export default function CharityVolunteers() {
                 </div>
                  <div>
                     <label className="block text-sm font-bold text-slate-500 mb-1">Hours</label>
-                    <input type="text" value={newVolunteerHours} onChange={(e) => setNewVolunteerHours(e.target.value)} placeholder="e.g. 12" className="w-full border rounded-lg px-3 py-2" />
+                    <input type="text" value={newVolunteerHours} onChange={(e) => setNewVolunteerHours(e.target.value)} placeholder="e.g. 12-5PM" className="w-full border rounded-lg px-3 py-2" />
                 </div>
                 <button type="submit" className="bg-nb-blue text-white font-bold py-2 px-4 rounded-lg hover:bg-nb-blue-dark transition-colors h-10">Add Volunteer</button>
             </form>
