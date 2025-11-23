@@ -66,7 +66,7 @@ export default function CreateDonation() {
 
   const handleLogin = async () => {
     try {
-      setError(null);
+      setError(null); 
       const result = await signInWithPopup(auth, googleProvider);
       await createUserProfile(result.user, "donor");
     } catch (err: any) {
@@ -109,6 +109,31 @@ export default function CreateDonation() {
       const weight = parseFloat(formData.weight);
       if (isNaN(weight) || weight <= 0) throw new Error("Invalid weight");
 
+      let finalLat = formData.lat;
+      let finalLng = formData.lng;
+      let finalAddress = formData.address;
+
+      // Geocode if coordinates are missing (user typed address without selecting)
+      if (finalLat === 0 && finalLng === 0) {
+         try {
+            const fullAddress = `${formData.address}, ${formData.city}`;
+            console.log("Geocoding manually entered address:", fullAddress);
+            const geoRes = await fetch(`/api/geocode?address=${encodeURIComponent(fullAddress)}`);
+            const geoData = await geoRes.json();
+            
+            if (geoRes.ok && geoData.lat && geoData.lng) {
+                finalLat = geoData.lat;
+                finalLng = geoData.lng;
+                finalAddress = geoData.formattedAddress || finalAddress;
+            } else {
+                throw new Error("Could not find location coordinates. Please select a valid address.");
+            }
+         } catch (err) {
+            console.error("Geocoding error:", err);
+            throw new Error("Please select a valid address from the list or ensure it is correct.");
+         }
+      }
+
       const donation: Omit<Donation, "id"> = {
         donorId: user.uid,
         title: formData.title,
@@ -122,9 +147,9 @@ export default function CreateDonation() {
         status: "available",
         createdAt: Timestamp.now(),
         location: {
-          lat: formData.lat || 43.6532,
-          lng: formData.lng || -79.3832,
-          address: `${formData.address}, ${formData.city}`,
+          lat: finalLat,
+          lng: finalLng,
+          address: finalAddress, // Use the geocoded formatted address if available
         },
       };
 
