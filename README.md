@@ -1,7 +1,12 @@
-# Surplus
+# Shurplus
 
 ## The Team
-**Ishaan Dhiman** • **Sai Amartya Balamurugan Lakshmipraba** • **Aamirali Tinwala** • **Dhairya Shah** • **Dhanika Botejue** • **Skyler Yoo**
+- **Ishaan Dhiman**
+- **Sai Amartya Balamurugan Lakshmipraba**
+- **Aamirali Tinwala**
+- **Dhairya Shah**
+- **Dhanika Botejue**
+- **Skyler Yoo**
 
 ---
 
@@ -18,7 +23,7 @@ Charities are overwhelmed by:
 ---
 
 ## The Solution
-**Surplus** is a dual-engine platform designed to bridge this gap:
+**Shurplus** is a dual-engine platform designed to bridge this gap:
 
 ### 1. The Marketplace
 Operates like a "Facebook Marketplace" for food rescue:
@@ -52,7 +57,7 @@ Three intelligent agents work in the background to streamline operations:
 ---
 
 ## Challenges & Lessons Learned
-Building SharingSurplus presented several technical and logistical hurdles:
+Building Shurplus presented several technical and logistical hurdles:
 
 *   **Version Control & Collaboration:** Managing a fast-paced codebase with 6 developers required strict coordination to avoid merge conflicts.
 *   **AI Vision Integration:** We had to pivot between SDKs to ensure reliable barcode and image recognition.
@@ -102,7 +107,14 @@ Building SharingSurplus presented several technical and logistical hurdles:
     *   **Firestore Database:** Create a database (start in test mode for development).
     *   **Project Settings:** Go to General > Your apps > Web app. Register the app and copy the `firebaseConfig` object.
 
-4.  **Environment Variables**
+4.  **Google APIs Setup**
+    *   **Gemini AI:** Get an API key from [Google AI Studio](https://aistudio.google.com/).
+    *   **Google Maps:**
+        *   Go to [Google Cloud Console](https://console.cloud.google.com/).
+        *   Enable **Maps JavaScript API**, **Places API**, and **Distance Matrix API**.
+        *   Create an API Key.
+
+5.  **Environment Variables**
     Create a `.env.local` file in the root directory and add the following keys:
 
     ```env
@@ -119,7 +131,7 @@ Building SharingSurplus presented several technical and logistical hurdles:
     MAPS_API=your_google_maps_api_key
     ```
 
-5.  **Run the development server**
+6.  **Run the development server**
     ```bash
     npm run dev
     ```
