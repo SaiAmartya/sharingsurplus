@@ -96,22 +96,14 @@ export default function CharityDashboard() {
                   <p className="font-display text-3xl font-bold text-nb-teal mt-1">{mealsServed.toLocaleString()}</p>
               </div>
           </div>
-          <div className="nb-card p-6 flex flex-col justify-between h-40 border-l-4 border-l-nb-red">
-              <div className="w-10 h-10 bg-nb-red rounded-full flex items-center justify-center text-white mb-4 shadow-lg shadow-nb-red/20">
-                  <i className="fas fa-hourglass-half"></i>
-              </div>
-              <div>
-                  <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Expiring (24h)</p>
-                  <p className="font-display text-3xl font-bold text-nb-red mt-1">15 <span className="text-base text-slate-400 font-sans font-medium">items</span></p>
-              </div>
-          </div>
+
             <div className="nb-card p-6 flex flex-col justify-between h-40">
               <div className="w-10 h-10 bg-nb-ink rounded-full flex items-center justify-center text-white mb-4 shadow-lg shadow-nb-ink/20">
                   <i className="fas fa-truck"></i>
               </div>
                 <div>
                   <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Active Drivers</p>
-                  <p className="font-display text-3xl font-bold text-nb-ink mt-1">12</p>
+                  <p className="font-display text-3xl font-bold text-nb-ink mt-1">1</p>
               </div>
           </div>
       </div>
