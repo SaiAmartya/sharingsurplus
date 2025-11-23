@@ -32,8 +32,7 @@ export async function POST(req: Request) {
       - Create a recipe suitable for mass feeding or distribution.
       - Calculate "Servings" based on the TOTAL AMOUNT available.
       - If you have 500 jars of sauce, you can feed hundreds of people.
-      - Explicitly state the quantity of each ingredient used (e.g., "500 jars (12,000oz)").
-      - Return JSON ONLY.
+      - Return JSON ONLY with STRUCTURED ingredients.
       
       JSON Structure:
       {
@@ -43,10 +42,24 @@ export async function POST(req: Request) {
         "difficulty": "Easy/Medium/Hard",
         "calories": "XXX kcal",
         "servings": "X people",
-        "ingredients": ["Qty Item", "Qty Item"],
+        "ingredients": [
+          {
+            "productName": "Exact product name from inventory",
+            "estimatedQuantity": 500,
+            "unit": "jars",
+            "totalAmount": "12,000oz"
+          }
+        ],
         "steps": ["Step 1 instruction...", "Step 2 instruction..."],
         "tags": ["Tag1", "Tag2"]
       }
+      
+      IMPORTANT for ingredients array:
+      - Use STRUCTURED objects, not plain text strings
+      - "productName" should match the inventory item name as closely as possible
+      - "estimatedQuantity" is a NUMBER (how many containers/items)
+      - "unit" describes the unit (jars, lbs, oz, boxes, cans, etc.)
+      - "totalAmount" is human-readable total weight/volume (optional)
     `;
 
     const response = await genAI.models.generateContent({

@@ -4,18 +4,7 @@ import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, orderBy, addDoc, Timestamp, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '@/app/context/AuthContext';
-
-interface Recipe {
-  name: string;
-  description: string;
-  prepTime: string;
-  difficulty: string;
-  calories: string;
-  servings: string;
-  ingredients: string[];
-  steps: string[];
-  tags: string[];
-}
+import { Recipe, StructuredIngredient } from '@/types/schema';
 
 export default function MealPlansPage() {
   const { user } = useAuth();
@@ -394,19 +383,36 @@ export default function MealPlansPage() {
                 </h3>
                 {isEditing ? (
                     <textarea 
-                        value={recipe.ingredients.join('\n')}
-                        onChange={(e) => setRecipe({...recipe, ingredients: e.target.value.split('\n')})}
+                        value={Array.isArray(recipe.ingredients) 
+                          ? typeof recipe.ingredients[0] === 'string'
+                            ? (recipe.ingredients as string[]).join('\n')
+                            : (recipe.ingredients as StructuredIngredient[]).map(ing => 
+                                `${ing.estimatedQuantity} ${ing.unit} ${ing.productName}`
+                              ).join('\n')
+                          : ''
+                        }
+                        onChange={(e) => {
+                          // For editing, keep as strings for simplicity
+                          setRecipe({...recipe, ingredients: e.target.value.split('\n') as any});
+                        }}
                         className="w-full text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:border-nb-blue outline-none min-h-[300px]"
                         placeholder="One ingredient per line"
                     />
                 ) : (
                     <ul className="space-y-3">
-                    {recipe.ingredients.map((item, i) => (
+                    {recipe.ingredients.map((item, i) => {
+                      // Handle both string and structured ingredients
+                      const displayText = typeof item === 'string' 
+                        ? item 
+                        : `${item.estimatedQuantity} ${item.unit} ${item.productName}${item.totalAmount ? ` (${item.totalAmount})` : ''}`;
+                      
+                      return (
                         <li key={i} className="flex items-start text-sm text-slate-600 group">
-                        <span className="w-1.5 h-1.5 rounded-full bg-slate-300 mt-1.5 mr-3 group-hover:bg-nb-blue transition-colors"></span>
-                        <span className="group-hover:text-nb-ink transition-colors">{item}</span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-300 mt-1.5 mr-3 group-hover:bg-nb-blue transition-colors"></span>
+                          <span className="group-hover:text-nb-ink transition-colors">{displayText}</span>
                         </li>
-                    ))}
+                      );
+                    })}
                     </ul>
                 )}
               </div>

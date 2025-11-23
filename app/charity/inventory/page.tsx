@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { db, auth } from '@/lib/firebase';
-import { collection, query, orderBy, onSnapshot, deleteDoc, doc, Timestamp, where, addDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, deleteDoc, doc, Timestamp, where, addDoc, updateDoc, getDocs } from 'firebase/firestore';
 import ProductModal from '@/app/components/ProductModal';
 import { ProductData } from '@/lib/openfoodfacts';
 import { useAuth } from '@/app/context/AuthContext';
 import { getUserProfile } from "@/lib/auth-helpers";
-import { UrgentRequest } from '@/types/schema';
+import { UrgentRequest, DistributionSession } from '@/types/schema';
 
 interface InventoryItem {
   id: string;
@@ -20,6 +20,8 @@ interface InventoryItem {
   barcode: string;
   category?: string;
   unitSize?: string;
+  reservedQuantity?: number;
+  distributedQuantity?: number;
 }
 
 export default function CharityInventory() {
@@ -27,7 +29,10 @@ export default function CharityInventory() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
-  const [activeTab, setActiveTab] = useState<'inventory' | 'requests'>('inventory');
+  const [activeTab, setActiveTab] = useState<'inventory' | 'requests' | 'history'>('inventory');
+
+  // Distribution History State
+  const [distributionHistory, setDistributionHistory] = useState<DistributionSession[]>([]);
 
   // Request Food State
   const [myRequests, setMyRequests] = useState<UrgentRequest[]>([]);
@@ -99,6 +104,37 @@ export default function CharityInventory() {
       unsubscribeRequests();
     };
   }, [user]);
+
+  // Fetch distribution history
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchHistory = async () => {
+      const q = query(
+        collection(db, "distributions"),
+        where("foodBankId", "==", user.uid),
+        where("status", "==", "completed")
+      );
+      const snapshot = await getDocs(q);
+      const sessions = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as DistributionSession[];
+      
+      // Sort by completion date (newest first)
+      sessions.sort((a, b) => {
+        const timeA = a.completedAt?.seconds || 0;
+        const timeB = b.completedAt?.seconds || 0;
+        return timeB - timeA;
+      });
+      
+      setDistributionHistory(sessions);
+    };
+
+    if (activeTab === 'history') {
+      fetchHistory();
+    }
+  }, [user, activeTab]);
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation(); // Prevent row click if we add one later
@@ -228,6 +264,12 @@ export default function CharityInventory() {
             >
               My Requests
             </button>
+            <button 
+              onClick={() => setActiveTab('history')}
+              className={`font-display text-xl font-bold transition-colors ${activeTab === 'history' ? 'text-nb-ink' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              Distribution History
+            </button>
           </div>
           <button 
             onClick={() => {
@@ -278,8 +320,13 @@ export default function CharityInventory() {
 
                     {/* Quantity */}
                     <div>
-                      <div className="font-medium text-slate-600 bg-slate-50 inline-block px-3 py-1 rounded-lg w-max">
-                        {item.quantity} units
+                      <div className="font-medium text-slate-600 bg-slate-50 px-3 py-1 rounded-lg w-max">
+                        <div className="font-bold text-nb-ink">{item.quantity} units</div>
+                        {(item.reservedQuantity && item.reservedQuantity > 0) && (
+                          <div className="text-xs text-slate-500 mt-0.5">
+                            Available: {Math.max(0, item.quantity - (item.reservedQuantity || 0))}
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -316,7 +363,7 @@ export default function CharityInventory() {
               ))}
             </>
           )
-        ) : (
+        ) : activeTab === 'requests' ? (
           // Requests Tab
           myRequests.length === 0 ? (
             <div className="text-center py-12 text-slate-400">
@@ -372,6 +419,85 @@ export default function CharityInventory() {
                     >
                       <i className="fas fa-trash-alt"></i>
                     </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        ) : (
+          // Distribution History Tab
+          distributionHistory.length === 0 ? (
+            <div className="text-center py-12 text-slate-400">
+              <i className="fas fa-history text-4xl mb-3 opacity-50"></i>
+              <p>No distribution history yet.</p>
+              <p className="text-sm">Complete distributions will appear here.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {distributionHistory.map((session) => (
+                <div key={session.id} className="bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition-all border border-transparent hover:border-nb-teal/20">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1">
+                      <h3 className="font-display text-lg font-bold text-nb-ink mb-1">
+                        {session.recipeName}
+                      </h3>
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <span className="font-bold">{formatDate(session.completedAt!)}</span>
+                        <span>•</span>
+                        <span>by {session.completedByName || 'Unknown'}</span>
+                      </div>
+                    </div>
+                    <div className="bg-nb-teal-soft text-nb-teal px-3 py-1 rounded-lg text-sm font-bold">
+                      <i className="fas fa-utensils mr-1"></i>
+                      {session.distributedMealCount} meals
+                    </div>
+                  </div>
+
+                  {/* Ingredient Usage Summary */}
+                  <div className="bg-slate-50 rounded-xl p-3 mt-3">
+                    <p className="text-xs font-bold text-slate-600 mb-2 uppercase tracking-wide">Ingredients Used:</p>
+                    <div className="space-y-1">
+                      {session.ingredientUsage.map((ing, idx) => (
+                        <div key={idx} className="flex justify-between items-center text-sm">
+                          <span className="text-slate-700">
+                            {ing.productName}
+                            {!ing.deductedFromInventory && (
+                              <span className="ml-2 text-xs text-yellow-600">
+                                <i className="fas fa-exclamation-triangle"></i>
+                              </span>
+                            )}
+                          </span>
+                          <span className="font-bold text-nb-ink">
+                            {ing.actualQuantity || ing.expectedQuantity} {ing.expectedUnit}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {session.hasVariance && (
+                      <div className="mt-2 pt-2 border-t border-slate-200">
+                        <p className="text-xs text-yellow-700">
+                          <i className="fas fa-info-circle mr-1"></i>
+                          Some variance detected between expected and actual usage.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Meal Count Details */}
+                  <div className="grid grid-cols-3 gap-2 mt-3">
+                    <div className="bg-blue-50 p-2 rounded-lg text-center">
+                      <p className="text-xs text-blue-600 font-bold">INITIAL</p>
+                      <p className="text-lg font-display font-bold text-blue-900">{session.initialMealCount}</p>
+                    </div>
+                    <div className="bg-red-50 p-2 rounded-lg text-center">
+                      <p className="text-xs text-red-600 font-bold">REMAINING</p>
+                      <p className="text-lg font-display font-bold text-red-900">{session.finalMealCount}</p>
+                    </div>
+                    <div className="bg-green-50 p-2 rounded-lg text-center">
+                      <p className="text-xs text-green-600 font-bold">SERVED</p>
+                      <p className="text-lg font-display font-bold text-green-900">{session.distributedMealCount}</p>
+                    </div>
                   </div>
                 </div>
               ))}
