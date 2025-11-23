@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { doc, deleteDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import {
   RouteData,
   RouteStop,
@@ -42,8 +44,18 @@ export default function ActiveDelivery() {
     setRouteLoading(false);
   }, []);
 
-  const handleComplete = () => {
-    if (!route) return;
+  const handleComplete = async () => {
+    if (!route || !activeStop) return;
+
+    // Delete the donation if it's a pickup and has a sourceId
+    if (activeStop.type === "pickup" && activeStop.sourceId) {
+        try {
+            await deleteDoc(doc(db, "donations", activeStop.sourceId));
+            console.log("Deleted donation:", activeStop.sourceId);
+        } catch (err) {
+            console.error("Failed to delete donation:", err);
+        }
+    }
 
     // Remove the completed stop and check for next one
     const nextStops = route.stops.slice(1);
@@ -349,56 +361,70 @@ function ActiveRouteContent({
             </div>
           ) : (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              {/* Pickup Form */}
-              <div>
-                <label className="block text-sm font-bold text-nb-ink mb-2">Recorded Weight (lbs)</label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={weight}
-                    onChange={(e) => setWeight(e.target.value)}
-                    placeholder="e.g. 45"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-nb-blue/20 focus:border-nb-blue transition-all font-bold text-lg"
-                  />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">lbs</span>
+              {activeStop.type === "pickup" ? (
+                <>
+                  {/* Pickup Form */}
+                  <div>
+                    <label className="block text-sm font-bold text-nb-ink mb-2">Recorded Weight (lbs)</label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={weight}
+                        onChange={(e) => setWeight(e.target.value)}
+                        placeholder="e.g. 45"
+                        className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-nb-blue/20 focus:border-nb-blue transition-all font-bold text-lg"
+                      />
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">lbs</span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-2">Approximate weight is fine.</p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="block text-sm font-bold text-nb-ink">Quality Checks</label>
+
+                    <label className="flex items-center gap-3 p-4 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={spoilageChecked}
+                        onChange={(e) => setSpoilageChecked(e.target.checked)}
+                        className="w-5 h-5 rounded border-slate-300 text-nb-blue focus:ring-nb-blue"
+                      />
+                      <div>
+                        <span className="font-bold text-nb-ink block">Spoilage Check</span>
+                        <span className="text-xs text-slate-500">Fresh items are free of mold/rot</span>
+                      </div>
+                    </label>
+
+                    <label className="flex items-center gap-3 p-4 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={expiryChecked}
+                        onChange={(e) => setExpiryChecked(e.target.checked)}
+                        className="w-5 h-5 rounded border-slate-300 text-nb-blue focus:ring-nb-blue"
+                      />
+                      <div>
+                        <span className="font-bold text-nb-ink block">Expiry Check</span>
+                        <span className="text-xs text-slate-500">Non-perishables are within date</span>
+                      </div>
+                    </label>
+                  </div>
+                </>
+              ) : (
+                <div className="p-6 bg-green-50 rounded-2xl border border-green-100 text-center mb-4">
+                  <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+                    <i className="fas fa-box-open"></i>
+                  </div>
+                  <h3 className="font-bold text-green-900 text-lg mb-2">Ready to Drop Off</h3>
+                  <p className="text-green-700 text-sm">
+                    Deliver the items to {activeStop.name}. No further checks required.
+                  </p>
                 </div>
-                <p className="text-xs text-slate-400 mt-2">Approximate weight is fine.</p>
-              </div>
-
-              <div className="space-y-3">
-                <label className="block text-sm font-bold text-nb-ink">Quality Checks</label>
-
-                <label className="flex items-center gap-3 p-4 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={spoilageChecked}
-                    onChange={(e) => setSpoilageChecked(e.target.checked)}
-                    className="w-5 h-5 rounded border-slate-300 text-nb-blue focus:ring-nb-blue"
-                  />
-                  <div>
-                    <span className="font-bold text-nb-ink block">Spoilage Check</span>
-                    <span className="text-xs text-slate-500">Fresh items are free of mold/rot</span>
-                  </div>
-                </label>
-
-                <label className="flex items-center gap-3 p-4 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={expiryChecked}
-                    onChange={(e) => setExpiryChecked(e.target.checked)}
-                    className="w-5 h-5 rounded border-slate-300 text-nb-blue focus:ring-nb-blue"
-                  />
-                  <div>
-                    <span className="font-bold text-nb-ink block">Expiry Check</span>
-                    <span className="text-xs text-slate-500">Non-perishables are within date</span>
-                  </div>
-                </label>
-              </div>
+              )}
 
               <div className="pt-4">
                 <button
                   onClick={handleComplete}
-                  disabled={!weight || !spoilageChecked || !expiryChecked}
+                  disabled={activeStop.type === "pickup" && (!weight || !spoilageChecked || !expiryChecked)}
                   className="w-full py-4 bg-nb-blue text-white rounded-xl font-bold text-lg shadow-lg hover:bg-blue-600 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   <span>Confirm {stopLabel}</span>
