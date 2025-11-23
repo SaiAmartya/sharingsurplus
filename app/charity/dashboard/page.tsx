@@ -6,6 +6,7 @@ import { auth, db } from "@/lib/firebase";
 import { collection, getDocs, query, where, onSnapshot, updateDoc, doc } from "firebase/firestore";
 import { UrgentRequest, DistributionSession } from "@/types/schema";
 import { onAuthStateChanged } from "firebase/auth";
+import ChatPanel from "@/app/components/ChatPanel";
 
 export default function CharityDashboard() {
   const [incomingRequests, setIncomingRequests] = useState<UrgentRequest[]>([]);
@@ -149,6 +150,10 @@ export default function CharityDashboard() {
                 </div>
               )}
           </div>
+      </div>
+
+      <div className="mb-10">
+        <ChatPanel />
       </div>
     </>
   );
