@@ -67,6 +67,7 @@ export interface UrgentRequest {
   location?: {
     lat: number;
     lng: number;
+    address?: string;
   };
 }
 

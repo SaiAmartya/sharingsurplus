@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { UrgentRequest } from '@/types/schema';
 import { Timestamp } from 'firebase/firestore';
+import NeedDetailsModal from '../NeedDetailsModal';
 
 interface RequestCardStackProps {
   requests: UrgentRequest[];
@@ -12,6 +13,7 @@ interface RequestCardStackProps {
 
 export default function RequestCardStack({ requests, onAccept, onDismiss }: RequestCardStackProps) {
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+  const [selectedRequest, setSelectedRequest] = useState<UrgentRequest | null>(null);
   const [dragX, setDragX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -189,9 +191,7 @@ export default function RequestCardStack({ requests, onAccept, onDismiss }: Requ
           </div>
 
           <div className="relative z-10">
-             <div className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-bold ${nextTheme.bottomPill} ${nextTheme.text}`}>
-                <i className="far fa-clock mr-2"></i> Needed by 4 PM
-             </div>
+             {/* Removed time requirement */}
           </div>
         </div>
       )}
@@ -228,8 +228,15 @@ export default function RequestCardStack({ requests, onAccept, onDismiss }: Requ
           <span className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm ${theme.pillBg} ${theme.pillText}`}>
             {currentRequest.urgency === 'high' ? 'URGENT' : currentRequest.urgency} • 2km
           </span>
-          <div className="w-10 h-10 bg-white/40 rounded-full flex items-center justify-center shadow-sm cursor-pointer hover:bg-white/60 transition-colors">
-            <i className={`fas fa-arrow-right ${theme.text}`}></i>
+          <div 
+            className="w-10 h-10 bg-white/40 rounded-full flex items-center justify-center shadow-sm cursor-pointer hover:bg-white/60 transition-colors group"
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedRequest(currentRequest);
+            }}
+          >
+            <i className={`fas fa-arrow-right ${theme.text} transform transition-transform duration-300 group-hover:-rotate-45`}></i>
           </div>
         </div>
 
@@ -244,11 +251,25 @@ export default function RequestCardStack({ requests, onAccept, onDismiss }: Requ
         </div>
 
         <div className="relative z-10 flex items-center justify-between">
-           <div className={`flex items-center text-sm font-bold px-4 py-2 rounded-full ${theme.bottomPill} ${theme.text}`}>
-             <i className="far fa-clock mr-2"></i> Needed by 4 PM
-           </div>
+           {/* Removed time requirement */}
         </div>
       </div>
+
+      {selectedRequest && (
+        <NeedDetailsModal 
+          need={{
+            id: selectedRequest.id!,
+            title: selectedRequest.item,
+            organizationName: selectedRequest.foodBankName || 'Food Bank',
+            description: selectedRequest.details || '',
+            urgency: selectedRequest.urgency,
+            location: { address: '2km away' }, // Placeholder
+            createdAt: selectedRequest.createdAt,
+            quantity: selectedRequest.quantity
+          }}
+          onClose={() => setSelectedRequest(null)}
+        />
+      )}
     </div>
   );
 }
