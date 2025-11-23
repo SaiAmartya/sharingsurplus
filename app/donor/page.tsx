@@ -9,6 +9,7 @@ import { Donation, UserProfile, UrgentRequest } from "@/types/schema";
 import DonationCard from "@/components/donor/DonationCard";
 import RequestCardStack from "@/app/components/donor/RequestCardStack";
 import { getUserProfile } from "@/lib/auth-helpers";
+import NeedDetailsModal, { Need } from "@/app/components/NeedDetailsModal";
 
 export default function DonorDashboard() {
   const [activeTab, setActiveTab] = useState<'nearby' | 'myitems'>('nearby');
@@ -18,6 +19,7 @@ export default function DonorDashboard() {
   const [urgentRequests, setUrgentRequests] = useState<UrgentRequest[]>([]);
   const [pendingRequests, setPendingRequests] = useState<UrgentRequest[]>([]);
   const [loadingDonations, setLoadingDonations] = useState(true);
+  const [selectedActivity, setSelectedActivity] = useState<Need | null>(null);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
@@ -191,7 +193,20 @@ export default function DonorDashboard() {
                 <h3 className="font-display text-xl font-bold text-nb-ink mb-4">Pending Deliveries</h3>
                 <div className="space-y-3">
                   {pendingRequests.map(req => (
-                    <div key={req.id} className="bg-white border border-slate-100 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+                    <div 
+                        key={req.id} 
+                        onClick={() => setSelectedActivity({
+                            id: req.id!,
+                            title: req.item,
+                            organizationName: req.foodBankName || 'Food Bank',
+                            description: req.details || '',
+                            urgency: req.urgency,
+                            location: { address: req.location?.address || 'Address not provided' },
+                            createdAt: req.createdAt,
+                            quantity: req.quantity
+                        })}
+                        className="bg-white border border-slate-100 rounded-2xl p-4 flex items-center justify-between shadow-sm cursor-pointer hover:border-nb-blue hover:shadow-md transition-all"
+                    >
                       <div>
                         <h4 className="font-bold text-nb-ink">
                           {req.item}
@@ -236,6 +251,14 @@ export default function DonorDashboard() {
       <Link href="/donor/create" className="fixed bottom-8 right-8 w-16 h-16 bg-nb-ink text-white rounded-[24px] shadow-glow hover:rotate-90 transition-all flex items-center justify-center text-2xl z-30 group">
           <i className="fas fa-plus group-hover:scale-110 transition-transform"></i>
       </Link>
+
+      {/* Modal for My Activity Items */}
+      {selectedActivity && (
+        <NeedDetailsModal 
+            need={selectedActivity} 
+            onClose={() => setSelectedActivity(null)} 
+        />
+      )}
     </div>
   );
 }
