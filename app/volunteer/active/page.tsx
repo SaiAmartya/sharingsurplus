@@ -7,6 +7,7 @@ import {
   RouteStop,
   loadPersistedRoute,
   clearPersistedRoute,
+  persistRoute,
   getPrimaryStop,
 } from "@/lib/route-storage";
 
@@ -23,6 +24,13 @@ export default function ActiveDelivery() {
   useEffect(() => {
     const storedRoute = loadPersistedRoute();
     if (storedRoute && storedRoute.foundRoute !== false) {
+      // Initialize completedStops and initialTotalStops if they don't exist
+      if (typeof storedRoute.completedStops === 'undefined') {
+        storedRoute.completedStops = 0;
+        storedRoute.initialTotalStops = storedRoute.stops.length;
+        persistRoute(storedRoute);
+      }
+      
       setRoute(storedRoute);
       setActiveStop(getPrimaryStop(storedRoute));
     } else {
@@ -35,8 +43,61 @@ export default function ActiveDelivery() {
   }, []);
 
   const handleComplete = () => {
-    setStatus("completed");
-    clearPersistedRoute();
+    if (!route) return;
+
+    // Remove the completed stop and check for next one
+    const nextStops = route.stops.slice(1);
+
+    if (nextStops.length > 0) {
+      // Progress to next stop
+      const updatedRoute = { 
+        ...route, 
+        stops: nextStops,
+        completedStops: (route.completedStops || 0) + 1,
+        initialTotalStops: route.initialTotalStops || (route.stops.length + (route.completedStops || 0))
+      };
+      setRoute(updatedRoute);
+      setActiveStop(nextStops[0]);
+      persistRoute(updatedRoute);
+
+      // Reset form state
+      setWeight("");
+      setSpoilageChecked(false);
+      setExpiryChecked(false);
+      setStatus("navigating");
+      window.scrollTo(0, 0);
+    } else {
+      // All stops done
+      setStatus("completed");
+      clearPersistedRoute();
+    }
+  };
+
+  const handleSkip = () => {
+    if (!route) return;
+
+    // Remove current stop without validating
+    const nextStops = route.stops.slice(1);
+
+    if (nextStops.length > 0) {
+        const updatedRoute = { 
+            ...route, 
+            stops: nextStops,
+            completedStops: (route.completedStops || 0) + 1,
+            initialTotalStops: route.initialTotalStops || (route.stops.length + (route.completedStops || 0))
+        };
+        setRoute(updatedRoute);
+        setActiveStop(nextStops[0]);
+        persistRoute(updatedRoute);
+        
+        // Reset UI state
+        setStatus("navigating");
+        window.scrollTo(0, 0);
+    } else {
+        // If skipping the last stop, just complete the route
+        setStatus("completed");
+        clearPersistedRoute();
+    }
   };
 
   if (routeLoading) {
@@ -79,6 +140,7 @@ export default function ActiveDelivery() {
         expiryChecked={expiryChecked}
         setExpiryChecked={setExpiryChecked}
         handleComplete={handleComplete}
+        handleSkip={handleSkip}
     />
   );
 }
@@ -94,7 +156,8 @@ function ActiveRouteContent({
     setSpoilageChecked,
     expiryChecked,
     setExpiryChecked,
-    handleComplete
+    handleComplete,
+    handleSkip
 }: {
     route: RouteData;
     activeStop: RouteStop;
@@ -107,6 +170,7 @@ function ActiveRouteContent({
     expiryChecked: boolean;
     setExpiryChecked: (c: boolean) => void;
     handleComplete: () => void;
+    handleSkip: () => void;
 }) {
   // Moved useMemo call inside the new component to ensure consistent hook execution
   const mapUrl = useMemo(() => {
@@ -221,7 +285,7 @@ function ActiveRouteContent({
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h3 className="font-bold text-lg text-nb-ink">
-                  Stop 1 of {route.stops.length}
+                  Stop {(route.completedStops || 0) + 1} of {route.initialTotalStops || (route.stops.length + (route.completedStops || 0))}
                 </h3>
                 <p className="text-slate-500">{activeStop.name}</p>
               </div>
@@ -272,7 +336,10 @@ function ActiveRouteContent({
               </button>
 
               <div className="grid grid-cols-2 gap-4 mt-4">
-                <button className="py-3 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-colors">
+                <button 
+                  onClick={handleSkip}
+                  className="py-3 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-colors"
+                >
                   Skip Stop
                 </button>
                 <button className="py-3 rounded-xl border border-slate-200 text-nb-red font-bold hover:bg-red-50 hover:border-red-100 transition-colors">

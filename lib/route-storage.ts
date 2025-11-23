@@ -21,6 +21,8 @@ export interface RouteData {
   totalTime: string;
   reasoning: string;
   foundRoute?: boolean;
+  completedStops?: number;
+  initialTotalStops?: number;
 }
 
 const STORAGE_KEY = "ss-active-route";
