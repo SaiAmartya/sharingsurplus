@@ -58,6 +58,7 @@ Building SharingSurplus presented several technical and logistical hurdles:
 *   **AI Vision Integration:** We had to pivot between SDKs to ensure reliable barcode and image recognition.
 *   **Data Security:** Designing complex Firestore rules was essential to keep Donor, Volunteer, and Food Bank data secure yet interconnected.
 *   **Prompt Engineering:** Teaching the AI to distinguish between "500 units" and "500 grams" was critical for accurate meal planning.
+*   **AI Calibration for Storage:** Calibrating the AI to accurately estimate storage needs and distribution logistics required iterative testing.
 *   **Smart Routing Logic:** We implemented real-time geolocation filtering and route optimization to ensure efficient delivery paths.
 *   **API Optimization:** We optimized the geocoding process to deliver precise coordinates for AI routing without triggering excessive API calls on every keystroke.
 *   **Live Data Integration:** Transitioning from static mock data to real-time Firestore streams required robust error handling and state management.
