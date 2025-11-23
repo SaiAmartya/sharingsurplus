@@ -1,4 +1,4 @@
-# SharingSurplus AI
+# Shurplus
 
 **Building a complete distributor-to-community automated marketplace streamlining the logistics and distribution of surplus food.**
 
