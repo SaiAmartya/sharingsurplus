@@ -115,6 +115,7 @@ Throughout the development of SharingSurplus, we encountered several technical a
 - **Smart Route Engineering:** Developing the Smart Route Generation Agent involved complex geolocation calculations and extensive "context engineering" to ensure the AI understood real-world constraints like traffic and vehicle capacity.
 - **Multi-User Architecture:** Integrating the tech stack to support three distinct user flows seamlessly within a single application required careful state management and routing logic.
 - **Agent Tooling:** Gathering the necessary context and defining clear tool definitions for the Food Bank AI Agent to function autonomously was a complex task requiring precise prompt engineering.
+- **Live Data Integration:** Transitioning from static mock data to live Firestore queries for donations and requests, specifically debugging why lists were empty and ensuring fields like addresses populated correctly.
 
 ---
 
