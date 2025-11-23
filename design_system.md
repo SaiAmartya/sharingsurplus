@@ -1,89 +1,69 @@
-Design System: Constructivist Logistics (Bauhaus Style)
+Design System: Neo-Bauhaus (Soft Geometry)
 
-Philosophy: "Less is More." The UI should function like a well-organized warehouse shelf. Distinct lines, clear labels, and bold signals.
+Philosophy: "Playful Functionality." We use geometric primitives (circles, arches, squares) to organize content, but with a softer, friendlier touch suited for community volunteering.
 
-1. Typography
+1. Color Palette (Lighter Contrast)
 
-We rely on fonts that mimic 20th-century poster design—geometric and industrial.
+We move away from stark Black/White to deep Greys and soft geometric fills.
 
-Headings: Syne (Extra Bold). Unapologetic, quirky, and distinct.
+Canvas: #FFFFFF (Pure White) or #F8FAFC (Very light cool grey).
 
-Usage: Page Titles, Key Metrics (e.g., "80 KG").
+Ink (Text): #1E293B (Slate 800) - Softer than black.
 
-Body / Data: Space Grotesk or DM Sans. Monospace-like readability for data.
+Primary (Community Blue): #4F46E5 (Indigo/Blue) - Used for major actions/headers. Refers to the "Untitled UI" reference.
 
-Usage: Lists, inventory tables, button text.
+Accent A (Active Orange): #FB923C (Soft Orange) - Used for urgency/action.
 
-2. Color Palette (The Bauhaus Triad)
+Accent B (Geometric Red): #F43F5E (Rose) - Used for alerts/stops.
 
-We strictly avoid pastels. Colors denote status with high contrast.
+Accent C (Stability Teal): #2DD4BF (Teal) - Used for success/freshness.
 
-Canvas (Background): #F4F3EE (Warm Off-White/Newsprint). Never pure #FFFFFF.
+Shapes/Fills: Low opacity versions of the above colors (e.g., bg-indigo-50) to define areas without borders.
 
-Structure (Ink): #121212 (Near Black). Used for all borders and primary text.
+2. Typography
 
-Action (International Orange): #FF4F00.
+Headings: Outfit or Syne. Geometric but legible.
 
-Usage: Primary Buttons, "Urgent", "Expiring Now".
+Body: DM Sans. Friendly, rounded sans-serif.
 
-Logistics (Klein Blue): #002FA7.
+3. UI Components (Rounded & Borderless)
 
-Usage: Navigation, Routing lines, Headers.
+The Container (The Tile)
 
-Data/Warning (Signal Yellow): #FFD700.
+Border: None (or very subtle border-slate-100).
 
-Usage: Highlights, secondary alerts, "Nutri-Score C".
+Radius: rounded-2xl or rounded-3xl. Large, friendly curves.
 
-Stability (Geometric Green): #008055.
-
-Usage: "Fresh", "Eco-Score A", Success states.
-
-3. UI Components & "The Grid"
-
-The Container (The Box)
-
-Border: 2px Solid Black (border-2 border-black).
-
-Radius: 0px (Sharp edges).
-
-Shadow: Hard offset shadow, no blur. (box-shadow: 5px 5px 0px 0px #000).
-
-Why? It feels tangible, like a physical box of food.
+Shadow: Soft, diffuse shadows (shadow-lg with low opacity). No hard edges.
 
 The Button
 
-Style: Rectangular. High contrast.
+Style: Pill shape (rounded-full).
 
-Interaction: On hover, the button moves down into its shadow (tactile feel).
+Hover: subtle lift (translate-y-[-2px]) and shadow bloom.
 
-Label: Uppercase, tracking-wide.
+Geometric Motifs (The "Bauhaus" Touch)
 
-The Visuals
+Use Quarter Circles and Semi-Circles as background decorations or to frame images.
 
-Icons: No filled, soft icons. Use thin-line geometric icons or ASCII-style symbols.
+Grids: Layouts should feel like a tiled masonry grid.
 
-Images: Treated with a grayscale filter or placed inside a distinct circular or square frame.
+4. View-Specific Updates
 
-4. View-Specific Rules
+Donor View
 
-Donor (Marketplace)
+Cards: White cards floating on a soft grey background.
 
-Layout: Masonry or Asymmetric Grid.
+Images: Clipped into geometric shapes (e.g., an image inside a circle or arch).
 
-Urgency: Indicated by a solid geometric shape (e.g., a red circle) overlaying the content.
+Volunteer View
 
-Volunteer (Route)
+Route Line: A thick, rounded path connecting circular nodes.
 
-Metaphor: The Transit Map.
+Map: Desaturated, clean map with bright geometric pins.
 
-Lines: Thick, connecting nodes.
+Charity Dashboard
 
-Checkboxes: Large, empty squares that fill with a solid "X" or block color.
+Table: "Zebra striping" replaced by floating rows with rounded corners.
 
-Charity (Inventory)
-
-Metaphor: The Ledger.
-
-Table: Distinct vertical and horizontal black lines separating every cell (Mondrian-style grid).
-
-Modal: A "Blueprint" overlay. White background, thick borders, technical data presentation.
+Modal: Clean, white floating sheet with a colorful geometric header.
