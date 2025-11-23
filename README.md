@@ -1,8 +1,8 @@
-# SharingSurplus
+# SharingSurplus AI
 
-**Empowering communities to share surplus food efficiently through technology.**
+**Building a complete distributor-to-community automated marketplace streamlining the logistics and distribution of surplus food.**
 
-## The Team
+## 👥 The Team
 - **Aamirali Tinwala**
 - **Dhairya Shah**
 - **Dhanika Botejue**
@@ -12,45 +12,98 @@
 
 ---
 
-## Project Overview
-SharingSurplus is a comprehensive platform connecting food donors, volunteers, and food banks. Our mission is to reduce food waste and combat hunger by streamlining the logistics of food rescue. We leverage cutting-edge AI and geolocation services to make the process seamless for everyone involved.
+## Pitch
+~40% of food in North America is wasted, yet Canadian food banks today are under unprecedented strain. HungerCount 2025 reports nearly 2.2 million visits in a single month (double the level of six years earlier). This surge means local charities must move far more food and serve even more people, with only volunteer labor and limited budgets. This creates logistical complexities at every step: collecting and cataloguing donations, storing them, and distributing the food to clients. Meanwhile, local food bank logistics are still operating inefficiently with old technology and intensive manual processes.
+
+**Several logistics issues exist:**
+1. **Inventory Chaos:** Volunteers at a Canadian food bank organize donated groceries. Tracking thousands of pounds of unsorted goods manually is a logistical headache. Food banks have no standardized SKUs, and many banks still track hundreds of items on Excel or paper.
+2. **Coordination Bottlenecks:** Organizing pickups from hundreds of donors (grocery stores, manufacturers, farms, house-to-house drives) is extremely labor-intensive.
+3. **Volunteer Management:** Local banks rely almost entirely on volunteers. Scheduling shifts and recording hours are often done by hand, wasting time and making recruitment difficult.
 
 ---
 
-## Key Features & Technical Challenges
+## The Solution
+The solution consists of two parts:
 
-### 1. 🗺️ AI-Powered Smart Routing
-**Importance:** Volunteers need the most efficient path to collect donations and deliver them to food banks to save time and fuel.
-**The Challenge:** Implementing this required complex integration of **Google Maps API** with **Generative AI**. We had to calculate distances in real-time, filter donations within a 20km radius, and use AI to optimize the stop order, all while handling asynchronous data streams from Firebase.
+### 1. Marketplace Aspect
+Connects all stakeholders similarly to Facebook Marketplace:
+- **Distributors** post food donation offers.
+- **Volunteer Transporters** view nearby distributions to pickup and drop.
+- **Food Banks** manage inventory, view recommended meals, request urgent items, and view incoming donations.
 
-### 2. 👨‍🍳 Intelligent Meal Planning
-**Importance:** Food banks often receive random assortments of ingredients. Our AI helps them turn "500 jars of sauce" into a viable meal plan for hundreds of people.
-**The Challenge:** We utilized **Google GenAI** to analyze inventory. The difficulty lay in "prompt engineering" the model to understand mass-feeding contexts—teaching it that "Count: 500" meant 500 units, not 500 grams—and forcing it to output structured JSON data for our UI to render.
-
-### 3. 📱 Barcode Scanning & Inventory Management
-**Importance:** Manual entry is slow and error-prone. Scanning allows for instant inventory updates.
-**The Challenge:** We integrated **Quagga2** for browser-based scanning and the **Open Food Facts API** to automatically fetch nutritional data, allergens, and product images. Synchronizing this real-time data with **Firebase Firestore** ensured that all users saw up-to-date inventory levels instantly.
-
-### 4. 🔐 Role-Based Ecosystem
-**Importance:** Donors, Volunteers, and Food Banks have vastly different needs and workflows.
-**The Challenge:** We built a robust **Role-Based Access Control (RBAC)** system using React Context (`AuthContext`, `RoleContext`). Managing state across three distinct user flows while maintaining a secure and seamless onboarding experience was a significant architectural hurdle.
-
-### 5. 🎨 Neo-Bauhaus Design System
-**Importance:** A friendly, accessible interface encourages community participation.
-**The Challenge:** We moved away from standard templates to a custom "Soft Geometry" design language. Translating abstract concepts like "playful functionality" into precise **Tailwind CSS** utility classes and reusable components required a high attention to detail.
+### 2. Automation Systems
+Three agents work together to amplify the marketplace:
+- **Inventory Agent**
+- **Networking Agent**
+- **Management Agent**
 
 ---
 
-## 🛤️ Our Journey
-Our journey began with a simple idea: connecting food to those who need it. 
-- **Phase 1:** We started by building the core infrastructure with Next.js and Firebase.
-- **Phase 2:** We realized logistics were a bottleneck, leading to the development of the Smart Routing system.
-- **Phase 3:** To add value for food banks, we introduced the AI Meal Planner.
-- **Recent Updates:** We've recently refactored our logic for handling flagged items and optimized our database queries to ensure the app scales smoothly as more users join.
+## Problem at Hand
+Logistics is the biggest obstacle faced by food banks and charities:
+- **Route Planning**
+- **Inventory Management** (logging food items & deciding what to give away)
+
+### Stakeholders
+- **Distributors/Wholesalers/Corporations:** Entities with "excess food" (ugly to sell or close to expiry).
+- **Foodbanks/Charities:** The recipients.
+- **Volunteer Moving Fleets:** E.g., "Move For Hunger" mobilizes volunteer fleets to collect bulk donations.
 
 ---
 
-## 🛠️ Tech Stack
+## Proposed Solution & Features
+
+### Marketplace Aspect
+- **Distributors:** Post food donation offers (photo, weight, expiry, pickup window).
+- **Volunteer Transporters:** View nearby distributions for pickup/drop.
+- **Food Banks:** Manage inventory, view AI-recommended meals, flag urgent items (visible to distributors), view incoming donations.
+
+### Automation Systems
+1. **Inventory Agent:**
+   - Vision system or barcode scanner to add products (OpenFoodFacts API).
+   - Suggest meals to give away based on expiry date.
+2. **Networking Agent / Route Planning:**
+   - Connects stakeholders (volunteer fleets).
+   - Coordinates logistics using **Google Maps API**.
+3. **Management Agent:**
+   - Helps manage volunteers and schedules.
+
+---
+
+## Concrete Feature List (MVP)
+
+### Donor Portal
+_Minimize the hassle of donation_
+- **Create Donation Posts:** Pickup window, Title, Description, Photo.
+- **View Requests:** See flagged/requested items from nearby food banks.
+
+### Volunteer Transporter Dashboard
+- **View Donation Posts:** Access available pickups.
+- **AI-Agent Recommended Routes:**
+  - Accepts pickup routes based on time windows.
+  - **Context:** Uses existing donation posts, food bank profiles, and volunteer profiles.
+  - **Tool:** Google Maps API for route testing and optimization.
+  - **Output:** Optimized route map ending at a nearby food bank.
+- **Check-in/out Logs:** Track each pickup and delivery.
+
+### Food Bank/Charity Dashboard
+**Automated Inventory Management Interface:**
+- **Intuitive Inventory View:** Easy-add via barcode scanning (OpenFoodFacts API) or AI image detection.
+- **AI Recommended Meal Plans:** Suggestions to distribute/share based on inventory expiry.
+- **Flag Urgent/Expiring Goods:** Request management.
+- **Refactored Flagged Items Logic:** Instead of accepted requests being immediately sent to incoming shipments, the system auto-creates a donation post with the request info, ensuring the agent knows it MUST be shipped to the requesting food bank.
+- **Routing Details:** Manage incoming shipments based on volunteer transport logs.
+- **Quick Monitoring:** Track total kg rescued, meals delivered, etc.
+
+### Volunteer Tracking & Management
+- **Volunteer Profiles:** Name, Contact info, Role/Team (sorting, warehouse, admin), Availability, Verification status.
+- **Logs Dashboard:** Clean table showing Volunteer name, Total hours, Tasks completed, Last active date.
+- **Reward Badges:** Acknowledge accomplishments based on hours and effort.
+- **Time Tracking:** Log start/end times for volunteering sessions.
+
+---
+
+## Tech Stack
 - **Framework:** Next.js 15 (App Router)
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS
@@ -61,7 +114,7 @@ Our journey began with a simple idea: connecting food to those who need it.
 
 ---
 
-## 🏁 Getting Started
+## Getting Started
 
 1. **Clone the repository**
 2. **Install dependencies:**
