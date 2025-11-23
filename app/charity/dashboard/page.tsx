@@ -3,15 +3,15 @@
 
 import { useState, useEffect } from "react";
 import { auth, db } from "@/lib/firebase";
-import { collection, query, where, onSnapshot, updateDoc, doc } from "firebase/firestore";
-import { } from "@/lib/auth-helpers";
-import {  UrgentRequest } from "@/types/schema";
+import { collection, getDocs, query, where, onSnapshot, updateDoc, doc } from "firebase/firestore";
+import { UrgentRequest, DistributionSession } from "@/types/schema";
 import { onAuthStateChanged } from "firebase/auth";
 import ChatPanel from "@/app/components/ChatPanel";
 
 export default function CharityDashboard() {
   const [incomingRequests, setIncomingRequests] = useState<UrgentRequest[]>([]);
   const [user, setUser] = useState<any>(null);
+  const [mealsServed, setMealsServed] = useState(0);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
@@ -40,6 +40,30 @@ export default function CharityDashboard() {
     return () => unsubscribe();
   }, [user]);
 
+  // Fetch meals served stat
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchMealsServed = async () => {
+      const q = query(
+        collection(db, "distributions"),
+        where("foodBankId", "==", user.uid),
+        where("status", "==", "completed")
+      );
+      const snapshot = await getDocs(q);
+      
+      let total = 0;
+      snapshot.docs.forEach(doc => {
+        const data = doc.data() as DistributionSession;
+        total += data.distributedMealCount || 0;
+      });
+      
+      setMealsServed(total);
+    };
+
+    fetchMealsServed();
+  }, [user]);
+
   const handleMarkReceived = async (requestId: string) => {
     try {
       await updateDoc(doc(db, "requests", requestId), {
@@ -53,6 +77,45 @@ export default function CharityDashboard() {
 
   return (
     <>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="nb-card p-6 flex flex-col justify-between h-40">
+              <div className="w-10 h-10 bg-nb-blue rounded-full flex items-center justify-center text-white mb-4 shadow-lg shadow-nb-blue/20">
+                  <i className="fas fa-weight-hanging"></i>
+              </div>
+              <div>
+                  <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Total Rescued</p>
+                  <p className="font-display text-3xl font-bold text-nb-ink mt-1">1,240 <span className="text-base text-slate-400 font-sans font-medium">kg</span></p>
+              </div>
+          </div>
+          <div className="nb-card p-6 flex flex-col justify-between h-40">
+              <div className="w-10 h-10 bg-nb-teal rounded-full flex items-center justify-center text-white mb-4 shadow-lg shadow-nb-teal/20">
+                  <i className="fas fa-utensils"></i>
+              </div>
+              <div>
+                  <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Meals Served</p>
+                  <p className="font-display text-3xl font-bold text-nb-teal mt-1">{mealsServed.toLocaleString()}</p>
+              </div>
+          </div>
+          <div className="nb-card p-6 flex flex-col justify-between h-40 border-l-4 border-l-nb-red">
+              <div className="w-10 h-10 bg-nb-red rounded-full flex items-center justify-center text-white mb-4 shadow-lg shadow-nb-red/20">
+                  <i className="fas fa-hourglass-half"></i>
+              </div>
+              <div>
+                  <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Expiring (24h)</p>
+                  <p className="font-display text-3xl font-bold text-nb-red mt-1">15 <span className="text-base text-slate-400 font-sans font-medium">items</span></p>
+              </div>
+          </div>
+            <div className="nb-card p-6 flex flex-col justify-between h-40">
+              <div className="w-10 h-10 bg-nb-ink rounded-full flex items-center justify-center text-white mb-4 shadow-lg shadow-nb-ink/20">
+                  <i className="fas fa-truck"></i>
+              </div>
+                <div>
+                  <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Active Drivers</p>
+                  <p className="font-display text-3xl font-bold text-nb-ink mt-1">12</p>
+              </div>
+          </div>
+      </div>
 
       {/* Incoming Ticker */}
       <div className="bg-nb-ink rounded-3xl p-8 text-white shadow-float relative overflow-hidden mb-8">
@@ -99,46 +162,6 @@ export default function CharityDashboard() {
 
       <div className="mb-10">
         <ChatPanel />
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="nb-card p-6 flex flex-col justify-between h-40">
-              <div className="w-10 h-10 bg-nb-blue-soft rounded-full flex items-center justify-center text-nb-blue mb-4">
-                  <i className="fas fa-weight-hanging"></i>
-              </div>
-              <div>
-                  <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Total Rescued</p>
-                  <p className="font-display text-3xl font-bold text-nb-ink mt-1">1,240 <span className="text-base text-slate-400 font-sans font-medium">kg</span></p>
-              </div>
-          </div>
-          <div className="nb-card p-6 flex flex-col justify-between h-40">
-              <div className="w-10 h-10 bg-nb-teal-soft rounded-full flex items-center justify-center text-nb-teal mb-4">
-                  <i className="fas fa-utensils"></i>
-              </div>
-              <div>
-                  <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Meals Served</p>
-                  <p className="font-display text-3xl font-bold text-nb-teal mt-1">3,400</p>
-              </div>
-          </div>
-          <div className="nb-card p-6 flex flex-col justify-between h-40 border-l-4 border-l-nb-red">
-              <div className="w-10 h-10 bg-nb-red-soft rounded-full flex items-center justify-center text-nb-red mb-4">
-                  <i className="fas fa-hourglass-half"></i>
-              </div>
-              <div>
-                  <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Expiring (24h)</p>
-                  <p className="font-display text-3xl font-bold text-nb-red mt-1">15 <span className="text-base text-slate-400 font-sans font-medium">items</span></p>
-              </div>
-          </div>
-            <div className="nb-card p-6 flex flex-col justify-between h-40">
-              <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 mb-4">
-                  <i className="fas fa-truck"></i>
-              </div>
-                <div>
-                  <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Active Drivers</p>
-                  <p className="font-display text-3xl font-bold text-nb-ink mt-1">12</p>
-              </div>
-          </div>
       </div>
     </>
   );

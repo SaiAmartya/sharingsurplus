@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { encode as encodeToon } from "@toon-format/toon";
 import {
   addDoc,
@@ -512,7 +514,15 @@ Tool Call: CREATE_MEMORY({ note: "Low on rice stock", category: "inventory" })
           }
 
           const recipe = await response.json();
-          return { success: true, recipe };
+
+          const docRef = await addDoc(collection(db, "saved_recipes"), {
+            foodBankId: user.uid,
+            recipe,
+            createdAt: Timestamp.now(),
+            updatedAt: Timestamp.now()
+          });
+
+          return { success: true, recipe, id: docRef.id };
         }
         case "EDIT_RECIPE": {
           if (!args.recipeId || !args.patch) {
@@ -927,7 +937,22 @@ Tool Call: CREATE_MEMORY({ note: "Low on rice stock", category: "inventory" })
                       : "bg-slate-50 text-slate-700 border border-slate-100"
                   }`}
                 >
-                  <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                  {isUser ? (
+                    <p className="whitespace-pre-wrap break-words text-white">{message.content}</p>
+                  ) : (
+                    <div className="prose prose-sm prose-slate max-w-none break-words [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          a: ({ node, ...props }) => (
+                            <a target="_blank" rel="noopener noreferrer" {...props} />
+                          ),
+                        }}
+                      >
+                        {message.content}
+                      </ReactMarkdown>
+                    </div>
+                  )}
                 </div>
               </div>
             );

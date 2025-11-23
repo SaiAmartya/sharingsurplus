@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { db, auth } from '@/lib/firebase';
-import { collection, query, orderBy, onSnapshot, deleteDoc, doc, Timestamp, where, addDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, deleteDoc, doc, Timestamp, where, addDoc, updateDoc, getDocs } from 'firebase/firestore';
 import ProductModal from '@/app/components/ProductModal';
 import { ProductData } from '@/lib/openfoodfacts';
 import { useAuth } from '@/app/context/AuthContext';
 import { getUserProfile } from "@/lib/auth-helpers";
-import { UrgentRequest } from '@/types/schema';
+import { UrgentRequest, DistributionSession } from '@/types/schema';
 
 interface InventoryItem {
   id: string;
@@ -20,6 +20,8 @@ interface InventoryItem {
   barcode: string;
   category?: string;
   unitSize?: string;
+  reservedQuantity?: number;
+  distributedQuantity?: number;
 }
 
 export default function CharityInventory() {
@@ -27,7 +29,10 @@ export default function CharityInventory() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
-  const [activeTab, setActiveTab] = useState<'inventory' | 'requests'>('inventory');
+  const [activeTab, setActiveTab] = useState<'inventory' | 'requests' | 'history'>('inventory');
+
+  // Distribution History State
+  const [distributionHistory, setDistributionHistory] = useState<DistributionSession[]>([]);
 
   // Request Food State
   const [myRequests, setMyRequests] = useState<UrgentRequest[]>([]);
@@ -99,6 +104,37 @@ export default function CharityInventory() {
       unsubscribeRequests();
     };
   }, [user]);
+
+  // Fetch distribution history
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchHistory = async () => {
+      const q = query(
+        collection(db, "distributions"),
+        where("foodBankId", "==", user.uid),
+        where("status", "==", "completed")
+      );
+      const snapshot = await getDocs(q);
+      const sessions = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as DistributionSession[];
+      
+      // Sort by completion date (newest first)
+      sessions.sort((a, b) => {
+        const timeA = a.completedAt?.seconds || 0;
+        const timeB = b.completedAt?.seconds || 0;
+        return timeB - timeA;
+      });
+      
+      setDistributionHistory(sessions);
+    };
+
+    if (activeTab === 'history') {
+      fetchHistory();
+    }
+  }, [user, activeTab]);
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation(); // Prevent row click if we add one later
@@ -228,6 +264,12 @@ export default function CharityInventory() {
             >
               My Requests
             </button>
+            <button 
+              onClick={() => setActiveTab('history')}
+              className={`font-display text-xl font-bold transition-colors ${activeTab === 'history' ? 'text-nb-ink' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              Distribution History
+            </button>
           </div>
           <button 
             onClick={() => {
@@ -235,12 +277,24 @@ export default function CharityInventory() {
               setRequestData({ item: "", quantity: "", details: "", urgency: "medium" });
               setIsRequestModalOpen(true);
             }}
-            className="bg-nb-blue text-white px-4 py-2 rounded-xl font-bold shadow-glow hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm focus:outline-none"
+            className="hidden md:flex bg-nb-blue text-white px-4 py-2 rounded-xl font-bold shadow-glow hover:bg-indigo-700 transition-colors items-center gap-2 text-sm focus:outline-none"
           >
             <i className="fas fa-bullhorn"></i>
             Request Food
           </button>
         </div>
+
+        {/* Mobile Request FAB */}
+        <button
+          onClick={() => {
+            setEditingRequest(null);
+            setRequestData({ item: "", quantity: "", details: "", urgency: "medium" });
+            setIsRequestModalOpen(true);
+          }}
+          className="md:hidden fixed bottom-24 right-4 z-40 w-14 h-14 bg-nb-blue text-white rounded-full shadow-xl flex items-center justify-center hover:bg-indigo-700 transition-colors focus:outline-none"
+        >
+          <i className="fas fa-bullhorn text-xl"></i>
+        </button>
 
         {activeTab === 'inventory' ? (
           inventory.length === 0 ? (
@@ -251,18 +305,18 @@ export default function CharityInventory() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-6 px-6 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  <div className="col-span-2">Product</div>
-                  <div>Qty</div>
-                  <div>Expiry</div>
-                  <div>Score</div>
+              <div className="grid grid-cols-[1fr_auto_auto] md:grid-cols-6 px-6 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider gap-2 md:gap-0">
+                  <div className="col-span-1 md:col-span-2">Product</div>
+                  <div className="text-center md:text-left">Qty</div>
+                  <div className="hidden md:block">Expiry</div>
+                  <div className="hidden md:block">Score</div>
                   <div className="text-right">Action</div>
               </div>
 
               {inventory.map((item) => (
-                <div key={item.id} className="bg-white rounded-2xl p-4 grid grid-cols-6 items-center shadow-sm hover:shadow-md hover:translate-y-[-2px] transition-all border border-transparent hover:border-nb-blue/20 group">
+                <div key={item.id} className="bg-white rounded-2xl p-4 grid grid-cols-[1fr_auto_auto] md:grid-cols-6 items-center shadow-sm hover:shadow-md hover:translate-y-[-2px] transition-all border border-transparent hover:border-nb-blue/20 group gap-2 md:gap-0">
                     {/* Product Info */}
-                    <div className="col-span-2 flex items-center">
+                    <div className="col-span-1 md:col-span-2 flex items-center min-w-0">
                         <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center mr-4 overflow-hidden shrink-0 border border-slate-100">
                             {item.imageUrl ? (
                               <img src={item.imageUrl} alt={item.productName} className="w-full h-full object-cover" />
@@ -270,26 +324,32 @@ export default function CharityInventory() {
                               <i className="fas fa-box text-slate-300"></i>
                             )}
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                             <p className="font-bold text-nb-ink truncate pr-2">{item.productName}</p>
                             <p className="text-xs text-slate-400 font-medium truncate">{item.brand}</p>
+                            <p className="text-xs text-slate-400 font-medium truncate md:hidden">Expiry: {formatDate(item.expiryDate)}</p>
                         </div>
                     </div>
 
                     {/* Quantity */}
-                    <div>
-                      <div className="font-medium text-slate-600 bg-slate-50 inline-block px-3 py-1 rounded-lg w-max">
-                        {item.quantity} units
+                    <div className="flex justify-center md:justify-start">
+                      <div className="font-medium text-slate-600 bg-slate-50 px-3 py-1 rounded-lg w-max text-center md:text-left">
+                        <div className="font-bold text-nb-ink">{item.quantity} units</div>
+                        {(item.reservedQuantity && item.reservedQuantity > 0) && (
+                          <div className="text-xs text-slate-500 mt-0.5">
+                            Available: {Math.max(0, item.quantity - (item.reservedQuantity || 0))}
+                          </div>
+                        )}
                       </div>
                     </div>
 
                     {/* Expiry */}
-                    <div className="font-medium text-slate-600">
+                    <div className="font-medium text-slate-600 hidden md:block">
                       {formatDate(item.expiryDate)}
                     </div>
 
                     {/* Score */}
-                    <div>
+                    <div className="hidden md:block">
                       <span className={`px-3 py-1 rounded-full text-xs font-bold ${getScoreColor(item.nutriScore)}`}>
                         {item.nutriScore || '?'}
                       </span>
@@ -316,7 +376,7 @@ export default function CharityInventory() {
               ))}
             </>
           )
-        ) : (
+        ) : activeTab === 'requests' ? (
           // Requests Tab
           myRequests.length === 0 ? (
             <div className="text-center py-12 text-slate-400">
@@ -372,6 +432,89 @@ export default function CharityInventory() {
                     >
                       <i className="fas fa-trash-alt"></i>
                     </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        ) : (
+          // Distribution History Tab
+          distributionHistory.length === 0 ? (
+            <div className="text-center py-16 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
+              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm text-slate-300 text-2xl">
+                <i className="fas fa-history"></i>
+              </div>
+              <p className="font-bold text-slate-500">No distribution history yet.</p>
+              <p className="text-sm text-slate-400 mt-2">Complete distributions will appear here.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {distributionHistory.map((session) => (
+                <div key={session.id} className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-float transition-all border border-slate-100 group">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex-1">
+                      <h3 className="font-display text-xl font-bold text-nb-ink mb-1 group-hover:text-nb-teal transition-colors">
+                        {session.recipeName}
+                      </h3>
+                      <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
+                        <span className="flex items-center gap-1"><i className="fas fa-calendar"></i> {formatDate(session.completedAt!)}</span>
+                        <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                        <span className="flex items-center gap-1"><i className="fas fa-user"></i> {session.completedByName || 'Unknown'}</span>
+                      </div>
+                    </div>
+                    <div className="bg-nb-teal-soft text-nb-teal px-4 py-2 rounded-xl text-sm font-bold flex flex-col items-center min-w-[80px]">
+                      <span className="text-xl font-display">{session.distributedMealCount}</span>
+                      <span className="text-[10px] uppercase tracking-wider">Meals</span>
+                    </div>
+                  </div>
+
+                  {/* Ingredient Usage Summary */}
+                  <div className="bg-slate-50 rounded-xl p-4 mt-4 border border-slate-100">
+                    <p className="text-xs font-bold text-slate-400 mb-3 uppercase tracking-wider flex items-center gap-2">
+                      <i className="fas fa-carrot"></i> Ingredients Used
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {session.ingredientUsage.map((ing, idx) => (
+                        <div key={idx} className="flex justify-between items-center text-sm bg-white p-2 rounded-lg border border-slate-100">
+                          <span className="text-slate-700 font-medium truncate pr-2">
+                            {ing.productName}
+                            {!ing.deductedFromInventory && (
+                              <span className="ml-2 text-xs text-orange-500" title="Not deducted from inventory">
+                                <i className="fas fa-exclamation-triangle"></i>
+                              </span>
+                            )}
+                          </span>
+                          <span className="font-bold text-nb-ink whitespace-nowrap text-xs bg-slate-100 px-2 py-1 rounded">
+                            {ing.actualQuantity || ing.expectedQuantity} {ing.expectedUnit}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {session.hasVariance && (
+                      <div className="mt-3 pt-3 border-t border-slate-200">
+                        <p className="text-xs text-orange-600 font-medium flex items-center gap-2">
+                          <i className="fas fa-info-circle"></i>
+                          Variance detected between expected and actual usage.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Meal Count Details */}
+                  <div className="grid grid-cols-3 gap-3 mt-4">
+                    <div className="bg-blue-50 p-3 rounded-xl text-center border border-blue-100">
+                      <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider mb-1">INITIAL</p>
+                      <p className="text-xl font-display font-bold text-blue-900">{session.initialMealCount}</p>
+                    </div>
+                    <div className="bg-red-50 p-3 rounded-xl text-center border border-red-100">
+                      <p className="text-[10px] text-red-600 font-bold uppercase tracking-wider mb-1">REMAINING</p>
+                      <p className="text-xl font-display font-bold text-red-900">{session.finalMealCount}</p>
+                    </div>
+                    <div className="bg-green-50 p-3 rounded-xl text-center border border-green-100">
+                      <p className="text-[10px] text-green-600 font-bold uppercase tracking-wider mb-1">SERVED</p>
+                      <p className="text-xl font-display font-bold text-green-900">{session.distributedMealCount}</p>
+                    </div>
                   </div>
                 </div>
               ))}
