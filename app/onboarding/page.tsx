@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect } from "react";
 import { auth, db } from "@/lib/firebase";
 import { doc, setDoc, onSnapshot, serverTimestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
-import { User } from "firebase/auth";
+import { User, signOut } from "firebase/auth";
 import { getRoleRoute } from "@/lib/routes";
 import AddressAutocomplete from "@/components/AddressAutocomplete";
 
@@ -40,6 +41,11 @@ export default function Onboarding() {
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push('/');
+  };
 
   // Define questions based on role
   const getQuestions = (role?: string): Question[] => {
@@ -124,8 +130,8 @@ export default function Onboarding() {
         {
           id: 'baseLocation',
           type: 'address',
-          question: 'What city or area are you based in?',
-          placeholder: 'e.g. Mississauga, Downtown Toronto'
+          question: 'What is your address?',
+          placeholder: 'e.g. 123 Main St, City, Province'
         },
         {
           id: 'availability',
@@ -267,7 +273,16 @@ export default function Onboarding() {
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-nb-bg flex flex-col">
+    <div className="min-h-screen bg-nb-bg flex flex-col relative">
+      <div className="absolute top-4 right-4 z-10">
+        <button 
+          onClick={handleLogout}
+          className="text-slate-500 hover:text-nb-ink font-bold px-4 py-2 transition-colors"
+        >
+          Sign Out
+        </button>
+      </div>
+
       {/* Progress Bar */}
       <div className="w-full h-2 bg-gray-200">
         <div 
