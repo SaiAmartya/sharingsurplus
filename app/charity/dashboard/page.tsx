@@ -1,8 +1,22 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { auth, db } from "@/lib/firebase";
+import { collection, addDoc, getDocs, query, where, Timestamp } from "firebase/firestore";
+import { getDistanceFromLatLonInKm } from "@/lib/location";
+import { getUserProfile } from "@/lib/auth-helpers";
+import { UserProfile } from "@/types/schema";
+
 export default function CharityDashboard() {
   return (
     <>
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="font-display text-3xl font-bold text-nb-ink">Dashboard</h1>
+      </div>
+
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="nb-card p-6 flex flex-col justify-between h-40">
               <div className="w-10 h-10 bg-nb-blue-soft rounded-full flex items-center justify-center text-nb-blue mb-4">
                   <i className="fas fa-weight-hanging"></i>
@@ -42,7 +56,7 @@ export default function CharityDashboard() {
       </div>
 
       {/* Incoming Ticker */}
-      <div className="bg-nb-ink rounded-3xl p-8 text-white shadow-float relative overflow-hidden">
+      <div className="bg-nb-ink rounded-3xl p-8 text-white shadow-float relative overflow-hidden mb-8">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-16 -mt-16 pointer-events-none"></div>
           
           <div className="flex justify-between items-end mb-6 relative z-10">
