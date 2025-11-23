@@ -23,7 +23,7 @@ service cloud.firestore {
 
     // Users collection
     match /users/{userId} {
-      allow read: if true;
+      allow get, list: if true;
       allow create: if isSignedIn() && isOwner(userId);
       allow update: if isSignedIn() && isOwner(userId);
       allow delete: if isSignedIn() && isOwner(userId);
@@ -39,7 +39,7 @@ service cloud.firestore {
 
     // Donations collection
     match /donations/{donationId} {
-      allow read: if true;
+      allow get, list: if true;
       // Allow create if signed in AND:
       // 1. Has donor role, OR
       // 2. Is creating donation for themselves (donorId matches auth.uid), OR

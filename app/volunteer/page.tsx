@@ -2,26 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { collection, getDocs, query, where, addDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Donation } from "@/types/schema";
 import DonationDetailsModal from "@/app/components/DonationDetailsModal";
-
-interface RouteStop {
-  type: 'pickup' | 'dropoff';
-  name: string;
-  description: string;
-  location: { lat: number; lng: number };
-  estimatedArrival: string;
-}
-
-interface RouteData {
-  stops: RouteStop[];
-  totalDistance: string;
-  totalTime: string;
-  reasoning: string;
-  foundRoute?: boolean;
-}
+import { RouteData, persistRoute, clearPersistedRoute } from "@/lib/route-storage";
 
 export default function VolunteerRoutes() {
   const [route, setRoute] = useState<RouteData | null>(null);
@@ -30,6 +16,8 @@ export default function VolunteerRoutes() {
   const [donations, setDonations] = useState<Donation[]>([]);
   const [donationsLoading, setDonationsLoading] = useState(true);
   const [selectedDonation, setSelectedDonation] = useState<Donation | null>(null);
+
+  const router = useRouter();
 
   useEffect(() => {
     const fetchRoute = async () => {
@@ -61,13 +49,21 @@ export default function VolunteerRoutes() {
 
         if (data.route) {
             setRoute(data.route);
+            setError(null);
+            if (data.route.foundRoute === false) {
+                clearPersistedRoute();
+            } else {
+                persistRoute(data.route);
+            }
         } else {
-            // Fallback or empty state
-             if (data.message) setError(data.message);
+            setRoute(null);
+            clearPersistedRoute();
+            if (data.message) setError(data.message);
         }
       } catch (err) {
         console.error(err);
         setError("Could not generate optimized route.");
+        clearPersistedRoute();
       } finally {
         setRouteLoading(false);
       }
@@ -109,6 +105,12 @@ export default function VolunteerRoutes() {
   useEffect(() => {
     fetchDonations();
   }, []);
+
+  const handleStartRoute = () => {
+    if (!route || route.foundRoute === false) return;
+    persistRoute(route);
+    router.push("/volunteer/active");
+  };
 
   const handleSeedData = async () => {
     try {
@@ -199,12 +201,27 @@ export default function VolunteerRoutes() {
                     {/* Visual Route Line */}
                     <div className="relative pl-4 border-l-2 border-slate-100 space-y-8 mb-8 ml-2">
                         {route.stops.map((stop, idx) => (
-                             <div key={idx} className="relative">
+                             <div key={`${stop.name}-${idx}`} className="relative space-y-1">
                                 <div className={`absolute -left-[23px] top-1 w-5 h-5 ${stop.type === 'pickup' ? 'bg-white border-4 border-nb-ink' : 'bg-nb-ink'} rounded-full ${stop.type === 'dropoff' ? 'shadow-sm' : ''}`}></div>
                                 <div>
                                     <h4 className="font-bold text-nb-ink text-lg">{stop.name}</h4>
                                     <p className="text-sm text-slate-500">{stop.description}</p>
                                     <span className="text-xs text-slate-400 font-mono">{stop.estimatedArrival}</span>
+                                    <div className="flex items-center gap-2 text-xs font-bold mt-1">
+                                        <span className="text-slate-400 uppercase tracking-wide">Contact</span>
+                                        {stop.contactPhone ? (
+                                            <a
+                                                href={`tel:${stop.contactPhone}`}
+                                                className="text-nb-blue flex items-center gap-1"
+                                                aria-label={`Call contact for ${stop.name}`}
+                                            >
+                                                <i className="fas fa-phone" />
+                                                {stop.contactPhone}
+                                            </a>
+                                        ) : (
+                                            <span className="text-slate-300">Unavailable</span>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -221,9 +238,13 @@ export default function VolunteerRoutes() {
                         </div>
                     )}
 
-                    <Link href="/volunteer/active" className="block w-full text-center bg-nb-blue text-white py-4 rounded-2xl font-bold hover:bg-indigo-600 transition-all shadow-glow hover:-translate-y-1">
+                    <button
+                        type="button"
+                        onClick={handleStartRoute}
+                        className="w-full text-center bg-nb-blue text-white py-4 rounded-2xl font-bold hover:bg-indigo-600 transition-all shadow-glow hover:-translate-y-1"
+                    >
                         Start Route
-                    </Link>
+                    </button>
                 </div>
             </div>
         )) : null}
