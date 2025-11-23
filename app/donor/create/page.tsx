@@ -251,7 +251,6 @@ export default function CreateDonation() {
                   className="nb-input p-4 w-20 appearance-none text-center cursor-pointer"
                 >
                   <option value="kg">kg</option>
-                  <option value="lbs">lbs</option>
                 </select>
               )}
             </div>
