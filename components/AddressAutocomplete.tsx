@@ -78,9 +78,10 @@ export default function AddressAutocomplete({
       const res = await fetch(`/api/places/details?place_id=${placeId}`);
       const data = await res.json();
       
-      if (data.result) {
+      if (data.result && data.result.geometry && data.result.geometry.location) {
         const { lat, lng } = data.result.geometry.location;
-        const formattedAddress = data.result.formatted_address;
+        const formattedAddress = data.result.formatted_address || description;
+        console.log("Selected location:", { lat, lng, formattedAddress });
         onChange(formattedAddress, lat, lng);
       }
     } catch (err) {

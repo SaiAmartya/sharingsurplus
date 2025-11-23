@@ -555,7 +555,7 @@ export default function CharityInventory() {
                     value={requestData.quantity}
                     onChange={(e) => setRequestData(prev => ({ ...prev, quantity: e.target.value }))}
                     className="nb-input p-4 w-full"
-                    placeholder="e.g. 50 lbs, 10 boxes"
+                    placeholder="e.g. 50 kg, 10 boxes"
                   />
                 </div>
 
