@@ -73,5 +73,9 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow write: if isSignedIn() && hasRole('foodbank');
     }
+    // This allows any signed-in user to manage the volunteers list.
+    match /volunteers/{volunteerId} {
+      allow read, write: if isSignedIn();
+    }
   }
 }

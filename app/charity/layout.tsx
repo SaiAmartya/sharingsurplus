@@ -65,6 +65,10 @@ export default function CharityLayout({
                 <i className="fas fa-box text-xl mr-4"></i>
                 <span>Inventory</span>
             </Link>
+            <Link href="/charity/meal-plans" className={`w-full p-4 rounded-2xl flex items-center justify-start font-bold transition-all ${isActive('/charity/meal-plans') ? 'bg-nb-blue text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 hover:text-nb-blue'}`}>
+                <i className="fas fa-utensils text-xl mr-4"></i>
+                <span>Meal Plans</span>
+            </Link>
             <Link href="/charity/volunteers" className={`w-full p-4 rounded-2xl flex items-center justify-start font-bold transition-all ${isActive('/charity/volunteers') ? 'bg-nb-blue text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 hover:text-nb-blue'}`}>
                 <i className="fas fa-users text-xl mr-4"></i>
                 <span>Volunteers</span>
@@ -99,6 +103,10 @@ export default function CharityLayout({
             <i className="fas fa-box text-xl mb-1"></i>
             <span className="text-[10px] font-bold">Inventory</span>
          </Link>
+         <Link href="/charity/meal-plans" className={`flex flex-col items-center justify-center w-full py-2 ${isActive('/charity/meal-plans') ? 'text-nb-blue' : 'text-slate-400'}`}>
+            <i className="fas fa-utensils text-xl mb-1"></i>
+            <span className="text-[10px] font-bold">Meals</span>
+         </Link>
          <Link href="/charity/volunteers" className={`flex flex-col items-center justify-center w-full py-2 ${isActive('/charity/volunteers') ? 'text-nb-blue' : 'text-slate-400'}`}>
             <i className="fas fa-users text-xl mb-1"></i>
             <span className="text-[10px] font-bold">Volunteers</span>
@@ -112,6 +120,7 @@ export default function CharityLayout({
             <h2 className="font-display text-2xl lg:text-3xl font-bold text-nb-ink truncate">
               {isActive('/charity/dashboard') && 'Dashboard'}
               {isActive('/charity/inventory') && 'Inventory Log'}
+              {isActive('/charity/meal-plans') && 'Meal Plans'}
               {isActive('/charity/volunteers') && 'Volunteer Roster'}
             </h2>
             <div className="flex items-center space-x-4">
