@@ -1,4 +1,4 @@
-# SharingSurplus
+# Surplus
 
 ## The Team
 **Ishaan Dhiman** • **Sai Amartya Balamurugan Lakshmipraba** • **Aamirali Tinwala** • **Dhairya Shah** • **Dhanika Botejue** • **Skyler Yoo**
@@ -18,7 +18,7 @@ Charities are overwhelmed by:
 ---
 
 ## The Solution
-**SharingSurplus** is a dual-engine platform designed to bridge this gap:
+**Surplus** is a dual-engine platform designed to bridge this gap:
 
 ### 1. The Marketplace
 Operates like a "Facebook Marketplace" for food rescue:
