@@ -63,6 +63,7 @@ Building this wasn't easy. Here's what we tackled:
 *   **Security:** Complex Firestore rules to keep Donor/Volunteer/Bank data separate but connected.
 *   **Context Engineering:** Teaching the AI to understand "500 units" vs "500 grams" for meal planning.
 *   **Smart Routing:** Real-time geolocation filtering and route optimization.
+*   **API Optimization:** Delivering precise coordinates for AI routing without triggering geocoding API calls on every user keystroke.
 *   **Live Data:** Moving from mock data to real-time Firestore streams.
 
 ---
