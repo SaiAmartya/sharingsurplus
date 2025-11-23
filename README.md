@@ -104,6 +104,20 @@ _Minimize the hassle of donation_
 
 ---
 
+## Difficulties Faced & Lessons Learned
+
+Throughout the development of SharingSurplus, we encountered several technical and logistical challenges:
+
+- **Version Control & Collaboration:** Managing multiple branches and resolving complex merge conflicts was a significant hurdle as our team worked on different features simultaneously.
+- **AI Vision Integration:** Implementing the AI Vision Scanner proved difficult initially due to SDK compatibility issues. Switching to the correct SDK and recalibrating the image processing pipeline required significant effort.
+- **Complex Firestore Security Rules:** Designing secure yet flexible Firestore rules to allow appropriate communication and data sharing between three distinct user roles (Food Banks, Donors, Volunteers) was a major architectural challenge.
+- **AI Calibration for Distribution:** Calibrating the AI to accurately estimate storage needs and distribution logistics introduced several setbacks that required iterative testing and refinement.
+- **Smart Route Engineering:** Developing the Smart Route Generation Agent involved complex geolocation calculations and extensive "context engineering" to ensure the AI understood real-world constraints like traffic and vehicle capacity.
+- **Multi-User Architecture:** Integrating the tech stack to support three distinct user flows seamlessly within a single application required careful state management and routing logic.
+- **Agent Tooling:** Gathering the necessary context and defining clear tool definitions for the Food Bank AI Agent to function autonomously was a complex task requiring precise prompt engineering.
+
+---
+
 ## Tech Stack
 - **Framework:** Next.js 15 (App Router)
 - **Language:** TypeScript
