@@ -75,7 +75,7 @@ export default function DonorDashboard() {
       setPendingRequests(requests);
     });
 
-    return () => unsubscribePending;
+    return () => unsubscribePending();
   }, [user]);
 
   useEffect(() => {
@@ -129,8 +129,9 @@ export default function DonorDashboard() {
   };
 
   const handleDismissRequest = (request: UrgentRequest) => {
-    // For now, just remove from local state to hide it
-    setUrgentRequests(prev => prev.filter(r => r.id !== request.id));
+    // RequestCardStack handles local hiding, so we don't need to do anything here
+    // unless we want to persist the dismissal to a user preference/collection
+    console.log("Dismissed:", request.id);
   };
 
   return (

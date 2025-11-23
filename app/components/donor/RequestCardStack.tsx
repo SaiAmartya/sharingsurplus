@@ -11,7 +11,7 @@ interface RequestCardStackProps {
 }
 
 export default function RequestCardStack({ requests, onAccept, onDismiss }: RequestCardStackProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
   const [dragX, setDragX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -25,8 +25,9 @@ export default function RequestCardStack({ requests, onAccept, onDismiss }: Requ
     }
   }, []);
 
-  const currentRequest = requests[currentIndex];
-  const nextRequest = requests[currentIndex + 1];
+  const visibleRequests = requests.filter(r => !hiddenIds.has(r.id!));
+  const currentRequest = visibleRequests[0];
+  const nextRequest = visibleRequests[1];
 
   if (!currentRequest) {
     return (
@@ -65,7 +66,7 @@ export default function RequestCardStack({ requests, onAccept, onDismiss }: Requ
       setExitDirection('right');
       setTimeout(() => {
         onAccept(currentRequest);
-        setCurrentIndex(prev => prev + 1);
+        setHiddenIds(prev => new Set(prev).add(currentRequest.id!));
         setExitDirection(null);
         setDragX(0);
       }, 300);
@@ -74,7 +75,7 @@ export default function RequestCardStack({ requests, onAccept, onDismiss }: Requ
       setExitDirection('left');
       setTimeout(() => {
         onDismiss(currentRequest);
-        setCurrentIndex(prev => prev + 1);
+        setHiddenIds(prev => new Set(prev).add(currentRequest.id!));
         setExitDirection(null);
         setDragX(0);
       }, 300);
