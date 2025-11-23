@@ -8,6 +8,7 @@ import { collection, addDoc, Timestamp } from "firebase/firestore";
 import { signInWithPopup, onAuthStateChanged, User } from "firebase/auth";
 import { Donation } from "@/types/schema";
 import { createUserProfile, getUserProfile } from "@/lib/auth-helpers";
+import AddressAutocomplete from "@/components/AddressAutocomplete";
 
 export default function CreateDonation() {
   const router = useRouter();
@@ -77,6 +78,15 @@ export default function CreateDonation() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleAddressChange = (address: string, lat?: number, lng?: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      address,
+      lat: lat || prev.lat,
+      lng: lng || prev.lng,
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -303,10 +313,9 @@ export default function CreateDonation() {
             <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-400 uppercase ml-2">Pickup Address *</label>
-                <input
-                  name="address"
+                <AddressAutocomplete
                   value={formData.address}
-                  onChange={handleInputChange}
+                  onChange={handleAddressChange}
                   className="nb-input p-4 w-full"
                   placeholder="Street address"
                 />
