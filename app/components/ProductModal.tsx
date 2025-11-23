@@ -24,13 +24,9 @@ export default function ProductModal({ product, barcode, onClose, inventoryId, i
   const [brand, setBrand] = useState(product.brands || '');
   const [quantity, setQuantity] = useState(() => {
     if (initialQuantity !== undefined) return initialQuantity;
-    // Try to parse a number from the quantity string if it exists
-    if (product.quantity) {
-      const parsed = parseInt(product.quantity);
-      return isNaN(parsed) ? 1 : parsed;
-    }
     return 1;
   });
+  const [unitSize, setUnitSize] = useState(product.quantity || '');
   const [category, setCategory] = useState(product.categories || '');
   
   // Default expiry to 1 week from now or initialExpiryDate
@@ -68,6 +64,7 @@ export default function ProductModal({ product, barcode, onClose, inventoryId, i
         productName: productName || 'Unknown Product',
         brand: brand || 'Unknown Brand',
         quantity: quantity,
+        unitSize: unitSize,
         barcode: barcode,
         category: category,
         // nutriScore removed from UI, saving original if available or null
@@ -146,7 +143,7 @@ export default function ProductModal({ product, barcode, onClose, inventoryId, i
           <div className="grid grid-cols-2 gap-4">
             {/* Quantity */}
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 focus-within:border-nb-blue/50 focus-within:bg-blue-50/50 transition-colors">
-              <label className="text-[10px] font-bold text-slate-400 uppercase block mb-2">Quantity</label>
+              <label className="text-[10px] font-bold text-slate-400 uppercase block mb-2">Quantity (Count)</label>
               <div className="flex items-center">
                 <button 
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -170,8 +167,20 @@ export default function ProductModal({ product, barcode, onClose, inventoryId, i
               </div>
             </div>
 
-            {/* Category */}
+            {/* Unit Size */}
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 focus-within:border-nb-blue/50 focus-within:bg-blue-50/50 transition-colors">
+              <label className="text-[10px] font-bold text-slate-400 uppercase block mb-2">Unit Size (e.g. 500g)</label>
+              <input 
+                type="text" 
+                value={unitSize}
+                onChange={(e) => setUnitSize(e.target.value)}
+                className="w-full bg-transparent font-display font-bold text-lg outline-none text-nb-ink placeholder:text-slate-300"
+                placeholder="N/A" 
+              />
+            </div>
+
+            {/* Category */}
+            <div className="col-span-2 p-4 bg-slate-50 rounded-2xl border border-slate-100 focus-within:border-nb-blue/50 focus-within:bg-blue-50/50 transition-colors">
               <label className="text-[10px] font-bold text-slate-400 uppercase block mb-2">Category</label>
               <input 
                 type="text" 

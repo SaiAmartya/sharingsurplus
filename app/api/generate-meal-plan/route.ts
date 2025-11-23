@@ -11,18 +11,28 @@ export async function POST(req: Request) {
     const genAI = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY });
 
     const itemsList = inventoryItems.map((item: any) => 
-      `- ${item.productName} (${item.quantity} units, expires: ${item.expiryDate})`
+      `- ${item.productName} (Count: ${item.quantity}, Size: ${item.unitSize || 'Unknown'})`
     ).join('\n');
 
     const prompt = `
-      You are a creative chef. Create ONE single, delicious recipe using the available inventory ingredients.
+      You are a professional chef planning meals for a FOOD BANK. 
+      Your goal is to create a recipe that feeds a LARGE number of people using the available inventory.
       
       Inventory:
       ${itemsList}
       
+      CRITICAL INSTRUCTIONS FOR QUANTITY:
+      - "Count" is the number of containers/items.
+      - "Size" is the size of ONE container.
+      - TOTAL AMOUNT = Count * Size.
+      - Example: "Count: 500, Size: 24oz" means you have 500 jars of 24oz each. That is 12,000oz of food!
+      - Do NOT assume "500" means 500 grams total. It means 500 UNITS.
+      
       Requirements:
-      - Use as many expiring items as possible.
-      - Keep it simple and practical.
+      - Create a recipe suitable for mass feeding or distribution.
+      - Calculate "Servings" based on the TOTAL AMOUNT available.
+      - If you have 500 jars of sauce, you can feed hundreds of people.
+      - Explicitly state the quantity of each ingredient used (e.g., "500 jars (12,000oz)").
       - Return JSON ONLY.
       
       JSON Structure:
