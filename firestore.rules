@@ -53,6 +53,12 @@ service cloud.firestore {
       allow delete: if isSignedIn() && resource.data.donorId == request.auth.uid;
     }
 
+    // Saved Recipes collection
+    match /saved_recipes/{recipeId} {
+      allow create: if isSignedIn() && request.resource.data.foodBankId == request.auth.uid;
+      allow read, update, delete: if isSignedIn() && resource.data.foodBankId == request.auth.uid;
+    }
+
     // Requests collection (Urgent needs)
     match /requests/{requestId} {
       allow read: if isSignedIn();
@@ -75,7 +81,8 @@ service cloud.firestore {
     // Inventory collection
     match /inventory/{itemId} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn() && hasRole('foodbank');
+      allow create: if isSignedIn() && request.resource.data.foodBankId == request.auth.uid;
+      allow update, delete: if isSignedIn() && resource.data.foodBankId == request.auth.uid;
     }
     // This allows any signed-in user to manage the volunteers list.
     match /volunteers/{volunteerId} {
