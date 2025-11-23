@@ -2,13 +2,14 @@
 
 **Building a complete distributor-to-community automated marketplace streamlining the logistics and distribution of surplus food.**
 
-## 👥 The Team
+## The Team
+- **Ishaan Dhiman**
+- **Sai Amartya Balamurugan Lakshmipraba**
 - **Aamirali Tinwala**
 - **Dhairya Shah**
 - **Dhanika Botejue**
-- **Sai Amartya Balamurugan Lakshmipraba**
 - **Skyler Yoo**
-- **Ishaan Dhiman**
+
 
 ---
 
