@@ -113,6 +113,8 @@ export async function POST(req: Request) {
     - The route should be optimized for applicability to the volunteer's vehicle, location, needs of food banks, etc.
     - Logic explanations must be very concise and to the point. 
     - Communicate estimated total time and other properties like "~45 minutes" or "~1 hour" in a very concise manner.
+    - Solely one food bank can have items delivered (always indicates the end of a route). 
+    - Never include donation post ID's in the descriptions.
     </guidelines>
 
 
