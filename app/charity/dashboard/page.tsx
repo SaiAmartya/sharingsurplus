@@ -2,12 +2,43 @@
 
 import { useState, useEffect } from "react";
 import { auth, db } from "@/lib/firebase";
-import { collection, addDoc, getDocs, query, where, Timestamp } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where, Timestamp, onSnapshot } from "firebase/firestore";
 import { getDistanceFromLatLonInKm } from "@/lib/location";
 import { getUserProfile } from "@/lib/auth-helpers";
-import { UserProfile } from "@/types/schema";
+import { UserProfile, UrgentRequest } from "@/types/schema";
+import { onAuthStateChanged } from "firebase/auth";
 
 export default function CharityDashboard() {
+  const [incomingRequests, setIncomingRequests] = useState<UrgentRequest[]>([]);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribeAuth();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const q = query(
+      collection(db, "requests"),
+      where("foodBankId", "==", user.uid),
+      where("status", "==", "accepted")
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const requests = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as UrgentRequest[];
+      setIncomingRequests(requests);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
   return (
     <>
       {/* Header */}
@@ -65,26 +96,26 @@ export default function CharityDashboard() {
           </div>
           
           <div className="space-y-4 relative z-10">
-              <div className="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/5">
-                  <div className="flex items-center">
-                      <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center font-bold mr-4">S</div>
-                      <div>
-                          <p className="font-bold text-sm">Truck #402 (Sarah)</p>
-                          <p className="text-xs text-slate-400">Walmart Dairy • 3 Pallets</p>
+              {incomingRequests.length > 0 ? (
+                incomingRequests.map(req => (
+                  <div key={req.id} className="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/5">
+                      <div className="flex items-center">
+                          <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center font-bold mr-4">
+                            {req.acceptedByName ? req.acceptedByName.charAt(0) : 'D'}
+                          </div>
+                          <div>
+                              <p className="font-bold text-sm">{req.acceptedByName || 'Anonymous Donor'}</p>
+                              <p className="text-xs text-slate-400">Bringing: {req.item}</p>
+                          </div>
                       </div>
+                      <span className="text-nb-teal font-bold text-sm">ACCEPTED</span>
                   </div>
-                  <span className="text-nb-orange font-bold text-sm">ETA 10 MIN</span>
-              </div>
-                <div className="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/5">
-                  <div className="flex items-center">
-                      <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center font-bold mr-4">M</div>
-                      <div>
-                          <p className="font-bold text-sm">Truck #112 (Mike)</p>
-                          <p className="text-xs text-slate-400">Farm A Roots • 12 Boxes</p>
-                      </div>
-                  </div>
-                  <span className="text-nb-teal font-bold text-sm">ARRIVED</span>
-              </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-slate-500">
+                  <p>No incoming deliveries at the moment.</p>
+                </div>
+              )}
           </div>
       </div>
     </>
