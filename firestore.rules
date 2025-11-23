@@ -50,7 +50,7 @@ service cloud.firestore {
          !hasProfile()); // Allow if profile doesn't exist yet (will be created)
       allow update: if isSignedIn() && 
         (resource.data.donorId == request.auth.uid || hasRole('volunteer') || hasRole('foodbank'));
-      allow delete: if isSignedIn() && resource.data.donorId == request.auth.uid;
+      allow delete: if isSignedIn() && (resource.data.donorId == request.auth.uid || hasRole('volunteer'));
     }
 
     // Saved Recipes collection
