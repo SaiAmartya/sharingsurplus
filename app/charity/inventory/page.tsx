@@ -17,6 +17,7 @@ interface InventoryItem {
   imageUrl?: string;
   barcode: string;
   category?: string;
+  unitSize?: string;
 }
 
 export default function CharityInventory() {
@@ -172,7 +173,8 @@ export default function CharityInventory() {
                     categories: editingItem.category,
                     nutriscore_grade: editingItem.nutriScore,
                     image_url: editingItem.imageUrl,
-                    code: editingItem.barcode
+                    code: editingItem.barcode,
+                    quantity: editingItem.unitSize
                 }}
                 barcode={editingItem.barcode}
                 onClose={() => setEditingItem(null)}
