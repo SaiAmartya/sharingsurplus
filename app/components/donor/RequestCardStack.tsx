@@ -200,12 +200,31 @@ export default function RequestCardStack({ requests, onAccept, onDismiss }: Requ
           }`}>
             {currentRequest.item}
           </h3>
+
+          {currentRequest.quantity && (
+            <p className={`font-bold text-xl mb-1 ${
+               currentRequest.urgency === 'high' ? 'text-rose-900' : 
+               currentRequest.urgency === 'medium' ? 'text-orange-900' : 'text-teal-900'
+            }`}>
+              Qty: {currentRequest.quantity}
+            </p>
+          )}
+
           <p className={`font-medium text-lg ${
              currentRequest.urgency === 'high' ? 'text-rose-900/60' : 
              currentRequest.urgency === 'medium' ? 'text-orange-900/60' : 'text-teal-900/60'
           }`}>
             {currentRequest.foodBankName || 'Food Bank'}
           </p>
+
+          {currentRequest.details && (
+            <p className={`mt-2 text-sm line-clamp-2 ${
+               currentRequest.urgency === 'high' ? 'text-rose-900/80' : 
+               currentRequest.urgency === 'medium' ? 'text-orange-900/80' : 'text-teal-900/80'
+            }`}>
+              "{currentRequest.details}"
+            </p>
+          )}
         </div>
 
         <div className="flex items-center justify-between">

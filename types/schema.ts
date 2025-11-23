@@ -56,6 +56,8 @@ export interface UrgentRequest {
   foodBankId: string;
   foodBankName?: string;
   item: string;
+  quantity?: string;
+  details?: string;
   urgency: 'high' | 'medium' | 'low';
   status: 'open' | 'accepted' | 'fulfilled';
   createdAt: Timestamp;

@@ -204,7 +204,10 @@ export default function DonorDashboard() {
                   {pendingRequests.map(req => (
                     <div key={req.id} className="bg-white border border-slate-100 rounded-2xl p-4 flex items-center justify-between shadow-sm">
                       <div>
-                        <h4 className="font-bold text-nb-ink">{req.item}</h4>
+                        <h4 className="font-bold text-nb-ink">
+                          {req.item}
+                          {req.quantity && <span className="text-slate-500 font-normal text-sm ml-2">({req.quantity})</span>}
+                        </h4>
                         <p className="text-xs text-slate-400">For: {req.foodBankName || 'Food Bank'}</p>
                       </div>
                       <span className="px-3 py-1 bg-nb-teal-soft text-nb-teal text-xs font-bold rounded-full">

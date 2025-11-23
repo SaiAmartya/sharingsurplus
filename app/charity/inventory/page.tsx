@@ -29,7 +29,7 @@ export default function CharityInventory() {
 
   // Request Food State
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
-  const [requestData, setRequestData] = useState({ item: "", urgency: "medium" });
+  const [requestData, setRequestData] = useState({ item: "", quantity: "", details: "", urgency: "medium" });
   const [requestLoading, setRequestLoading] = useState(false);
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
   const [requestStatus, setRequestStatus] = useState<{type: 'success' | 'error', message: string} | null>(null);
@@ -100,6 +100,8 @@ export default function CharityInventory() {
         foodBankId: currentUser.uid,
         foodBankName: currentUser.displayName || "Food Bank",
         item: requestData.item,
+        quantity: requestData.quantity,
+        details: requestData.details,
         urgency: requestData.urgency,
         status: 'open',
         createdAt: Timestamp.now(),
@@ -108,7 +110,7 @@ export default function CharityInventory() {
 
       setRequestStatus({ type: 'success', message: `Request broadcasted successfully.` });
       setIsRequestModalOpen(false);
-      setRequestData({ item: "", urgency: "medium" });
+      setRequestData({ item: "", quantity: "", details: "", urgency: "medium" });
     } catch (error: any) {
       console.error("Error sending request:", error);
       setRequestStatus({ type: 'error', message: "Failed to send request. Please try again." });
@@ -269,6 +271,27 @@ export default function CharityInventory() {
                     className="nb-input p-4 w-full"
                     placeholder="e.g. Fresh Produce, Canned Goods"
                     required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-400 uppercase ml-2">Quantity</label>
+                  <input
+                    type="text"
+                    value={requestData.quantity}
+                    onChange={(e) => setRequestData(prev => ({ ...prev, quantity: e.target.value }))}
+                    className="nb-input p-4 w-full"
+                    placeholder="e.g. 50 lbs, 10 boxes"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-400 uppercase ml-2">Extra Details</label>
+                  <textarea
+                    value={requestData.details}
+                    onChange={(e) => setRequestData(prev => ({ ...prev, details: e.target.value }))}
+                    className="nb-input p-4 w-full min-h-[100px]"
+                    placeholder="Any specific requirements or notes..."
                   />
                 </div>
 
