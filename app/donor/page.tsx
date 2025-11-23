@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { collection, query, where, onSnapshot, updateDoc, doc, Timestamp } from "firebase/firestore";
+import { collection, query, where, onSnapshot, updateDoc, doc, Timestamp, addDoc } from "firebase/firestore";
 import { Donation, UserProfile, UrgentRequest } from "@/types/schema";
 import DonationCard from "@/components/donor/DonationCard";
 import RequestCardStack from "@/app/components/donor/RequestCardStack";
@@ -116,12 +116,60 @@ export default function DonorDashboard() {
     if (!user || !request.id) return;
 
     try {
+      // Parse quantity to extract weight (e.g., "50 kg" -> 50)
+      let weight = 10; // Default weight
+      let weightUnit: 'kg' | 'items' = 'kg';
+      if (request.quantity) {
+        const match = request.quantity.match(/([0-9.]+)\s*(kg|lbs|items?|boxes?)?/i);
+        if (match) {
+          weight = parseFloat(match[1]);
+          const unit = match[2]?.toLowerCase();
+          if (unit?.includes('item') || unit?.includes('box')) {
+            weightUnit = 'items';
+          }
+        }
+      }
+
+      // Calculate expiry date (default 7 days from now)
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + 7);
+
+      // Use donor's saved address or default location
+      const donorAddress = userProfile?.pickupAddress || userProfile?.location?.address || "Pickup location to be confirmed";
+      const donorLat = userProfile?.location?.lat || 43.6532;
+      const donorLng = userProfile?.location?.lng || -79.3832;
+
+      // Auto-create donation post from request data
+      const donationData: Omit<Donation, 'id'> = {
+        donorId: user.uid,
+        title: request.item,
+        description: request.details || `Fulfilling request from ${request.foodBankName || 'food bank'}`,
+        weight: weight,
+        weightUnit: weightUnit,
+        expiryDate: Timestamp.fromDate(expiryDate),
+        pickupWindow: "All Day",
+        status: 'available',
+        createdAt: Timestamp.now(),
+        location: {
+          lat: donorLat,
+          lng: donorLng,
+          address: donorAddress
+        },
+        mustShipTo: request.foodBankId,
+        fromRequestId: request.id
+      };
+
+      // Create the donation post first
+      await addDoc(collection(db, "donations"), donationData);
+
+      // Then update the request status
       await updateDoc(doc(db, "requests", request.id), {
         status: 'accepted',
         acceptedBy: user.uid,
         acceptedByName: userProfile?.displayName || user.displayName || 'Anonymous Donor',
         acceptedAt: Timestamp.now()
       });
+
     } catch (error) {
       console.error("Error accepting request:", error);
       alert("Failed to accept request. Please try again.");

@@ -49,6 +49,9 @@ export interface Donation {
     lng: number;
     address: string;
   };
+  // Flagged donation properties
+  mustShipTo?: string; // Food bank ID this donation MUST be shipped to
+  fromRequestId?: string; // Links back to the UrgentRequest that created this
 }
 
 export interface UrgentRequest {

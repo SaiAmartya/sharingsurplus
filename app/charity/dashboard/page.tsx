@@ -6,11 +6,11 @@ import { auth, db } from "@/lib/firebase";
 import { collection, addDoc, getDocs, query, where, Timestamp, onSnapshot, updateDoc, doc } from "firebase/firestore";
 import { getDistanceFromLatLonInKm } from "@/lib/location";
 import { getUserProfile } from "@/lib/auth-helpers";
-import { UserProfile, UrgentRequest } from "@/types/schema";
+import { UserProfile, UrgentRequest, Donation } from "@/types/schema";
 import { onAuthStateChanged } from "firebase/auth";
 
 export default function CharityDashboard() {
-  const [incomingRequests, setIncomingRequests] = useState<UrgentRequest[]>([]);
+  const [incomingDonations, setIncomingDonations] = useState<Donation[]>([]);
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
@@ -23,30 +23,43 @@ export default function CharityDashboard() {
   useEffect(() => {
     if (!user) return;
 
+    // Query for donation posts that must ship to this food bank
     const q = query(
-      collection(db, "requests"),
-      where("foodBankId", "==", user.uid),
-      where("status", "==", "accepted")
+      collection(db, "donations"),
+      where("mustShipTo", "==", user.uid)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const requests = snapshot.docs.map(doc => ({
+      const donations = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      })) as UrgentRequest[];
-      setIncomingRequests(requests);
+      })) as Donation[];
+      
+      // Filter to show only non-delivered donations
+      const activeDonations = donations.filter(d => d.status !== 'delivered');
+      setIncomingDonations(activeDonations);
     });
 
     return () => unsubscribe();
   }, [user]);
 
-  const handleMarkReceived = async (requestId: string) => {
+  const handleMarkReceived = async (donation: Donation) => {
+    if (!donation.id) return;
+
     try {
-      await updateDoc(doc(db, "requests", requestId), {
-        status: 'fulfilled'
+      // Update donation status to delivered
+      await updateDoc(doc(db, "donations", donation.id), {
+        status: 'delivered'
       });
+
+      // If this donation was created from a request, mark the request as fulfilled
+      if (donation.fromRequestId) {
+        await updateDoc(doc(db, "requests", donation.fromRequestId), {
+          status: 'fulfilled'
+        });
+      }
     } catch (error) {
-      console.error("Error marking request as received:", error);
+      console.error("Error marking donation as received:", error);
       alert("Failed to update status");
     }
   };
@@ -104,22 +117,27 @@ export default function CharityDashboard() {
           </div>
           
           <div className="space-y-4 relative z-10">
-              {incomingRequests.length > 0 ? (
-                incomingRequests.map(req => (
-                  <div key={req.id} className="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/5">
+              {incomingDonations.length > 0 ? (
+                incomingDonations.map(donation => (
+                  <div key={donation.id} className="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/5">
                       <div className="flex items-center">
                           <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center font-bold mr-4">
-                            {req.acceptedByName ? req.acceptedByName.charAt(0) : 'D'}
+                            D
                           </div>
                           <div>
-                              <p className="font-bold text-sm">{req.acceptedByName || 'Anonymous Donor'}</p>
-                              <p className="text-xs text-slate-400">Bringing: {req.item}</p>
+                              <p className="font-bold text-sm">{donation.title}</p>
+                              <p className="text-xs text-slate-400">
+                                {donation.weight} {donation.weightUnit}
+                                {donation.fromRequestId && <span className="ml-2 text-nb-teal">• From Request</span>}
+                              </p>
                           </div>
                       </div>
                       <div className="flex items-center gap-4">
-                        <span className="text-nb-teal font-bold text-xs tracking-wider hidden sm:block">ACCEPTED</span>
+                        <span className="text-nb-teal font-bold text-xs tracking-wider hidden sm:block">
+                          {donation.status === 'picked_up' ? 'IN TRANSIT' : 'READY'}
+                        </span>
                         <button 
-                            onClick={() => handleMarkReceived(req.id!)}
+                            onClick={() => handleMarkReceived(donation)}
                             className="bg-white/10 hover:bg-nb-teal hover:text-nb-ink text-white px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 group"
                             title="Confirm delivery"
                         >
