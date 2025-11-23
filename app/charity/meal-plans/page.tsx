@@ -2,20 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, orderBy, addDoc, Timestamp, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, addDoc, Timestamp, deleteDoc, doc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { useAuth } from '@/app/context/AuthContext';
-
-interface Recipe {
-  name: string;
-  description: string;
-  prepTime: string;
-  difficulty: string;
-  calories: string;
-  servings: string;
-  ingredients: string[];
-  steps: string[];
-  tags: string[];
-}
+import { Recipe, SavedRecipe, DistributionSession, InventoryItem, StructuredIngredient } from '@/types/schema';
+import DistributionModal from '@/app/components/DistributionModal';
 
 export default function MealPlansPage() {
   const { user } = useAuth();
@@ -23,15 +13,44 @@ export default function MealPlansPage() {
   const [saving, setSaving] = useState(false);
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [inventoryCount, setInventoryCount] = useState(0);
-  const [savedRecipes, setSavedRecipes] = useState<any[]>([]);
+  const [savedRecipes, setSavedRecipes] = useState<SavedRecipe[]>([]);
   const [view, setView] = useState<'generate' | 'saved'>('generate');
   const [currentRecipeId, setCurrentRecipeId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+
+  // Distribution State
+  const [activeSessions, setActiveSessions] = useState<DistributionSession[]>([]);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [distributionRecipe, setDistributionRecipe] = useState<SavedRecipe | null>(null);
+  const [currentActiveSession, setCurrentActiveSession] = useState<DistributionSession | null>(null);
 
   useEffect(() => {
     if (user) {
       checkInventory();
       fetchSavedRecipes();
+      
+      // Subscribe to active distributions
+      const qDist = query(
+        collection(db, "distributions"), 
+        where("foodBankId", "==", user.uid),
+        where("status", "==", "active")
+      );
+      const unsubDist = onSnapshot(qDist, (snapshot) => {
+        const sessions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as DistributionSession[];
+        setActiveSessions(sessions);
+      });
+
+      // Subscribe to inventory (needed for distribution modal)
+      const qInv = query(collection(db, "inventory"), where("foodBankId", "==", user.uid));
+      const unsubInv = onSnapshot(qInv, (snapshot) => {
+        const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as InventoryItem[];
+        setInventory(items);
+      });
+
+      return () => {
+        unsubDist();
+        unsubInv();
+      };
     }
   }, [user]);
 
@@ -50,7 +69,7 @@ export default function MealPlansPage() {
       orderBy("createdAt", "desc")
     );
     const snapshot = await getDocs(q);
-    setSavedRecipes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    setSavedRecipes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as SavedRecipe)));
   };
 
   const handleSave = async () => {
@@ -98,6 +117,23 @@ export default function MealPlansPage() {
       console.error("Error deleting recipe:", error);
       alert("Failed to delete recipe.");
     }
+  };
+
+  const handleStartDistribution = (e: React.MouseEvent, recipe: SavedRecipe) => {
+    e.stopPropagation();
+    setDistributionRecipe(recipe);
+    setCurrentActiveSession(null);
+  };
+
+  const handleResumeDistribution = (e: React.MouseEvent, recipe: SavedRecipe, session: DistributionSession) => {
+    e.stopPropagation();
+    setDistributionRecipe(recipe);
+    setCurrentActiveSession(session);
+  };
+
+  const handleCloseDistribution = () => {
+    setDistributionRecipe(null);
+    setCurrentActiveSession(null);
   };
 
   const generatePlan = async () => {
@@ -160,7 +196,7 @@ export default function MealPlansPage() {
           onClick={() => setView('saved')}
           className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${view === 'saved' ? 'bg-white text-nb-ink shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
         >
-          Saved Recipes
+          Saved Meal Plans
         </button>
       </div>
 
@@ -172,34 +208,59 @@ export default function MealPlansPage() {
               <p>No saved recipes yet.</p>
             </div>
           ) : (
-            savedRecipes.map((item) => (
-              <div key={item.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-md transition-all cursor-pointer group relative" onClick={() => { setRecipe(item.recipe); setCurrentRecipeId(item.id); setView('generate'); setIsEditing(false); }}>
-                <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button 
-                        onClick={(e) => handleDelete(e, item.id)}
-                        className="w-8 h-8 rounded-full bg-white text-slate-400 hover:text-red-500 hover:bg-red-50 shadow-sm flex items-center justify-center transition-colors"
-                        title="Delete Recipe"
-                    >
-                        <i className="fas fa-trash-alt"></i>
-                    </button>
-                </div>
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-2 pr-8">
-                    <h3 className="font-bold text-nb-ink text-lg group-hover:text-nb-blue transition-colors">{item.recipe.name}</h3>
-                    <span className="text-[10px] font-bold bg-slate-50 text-slate-400 px-2 py-1 rounded-full uppercase shrink-0 ml-2">{item.recipe.difficulty}</span>
+            savedRecipes.map((item) => {
+              const activeSession = activeSessions.find(s => s.recipeId === item.id);
+              
+              return (
+                <div key={item.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-md transition-all cursor-pointer group relative" onClick={() => { setRecipe(item.recipe); setCurrentRecipeId(item.id || null); setView('generate'); setIsEditing(false); }}>
+                  <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                      <button 
+                          onClick={(e) => handleDelete(e, item.id!)}
+                          className="w-8 h-8 rounded-full bg-white text-slate-400 hover:text-red-500 hover:bg-red-50 shadow-sm flex items-center justify-center transition-colors"
+                          title="Delete Recipe"
+                      >
+                          <i className="fas fa-trash-alt"></i>
+                      </button>
                   </div>
-                  <p className="text-slate-500 text-sm line-clamp-2 mb-4">{item.recipe.description}</p>
-                  <div className="flex items-center gap-4 text-xs text-slate-400 font-bold uppercase tracking-wider">
-                    <span className="flex items-center"><i className="fas fa-clock mr-1.5"></i> {item.recipe.prepTime}</span>
-                    <span className="flex items-center"><i className="fas fa-user-friends mr-1.5"></i> {item.recipe.servings}</span>
+                  <div className="p-6">
+                    <div className="flex justify-between items-start mb-2 pr-8">
+                      <h3 className="font-bold text-nb-ink text-lg group-hover:text-nb-blue transition-colors">{item.recipe.name}</h3>
+                      <span className="text-[10px] font-bold bg-slate-50 text-slate-400 px-2 py-1 rounded-full uppercase shrink-0 ml-2">{item.recipe.difficulty}</span>
+                    </div>
+                    <p className="text-slate-500 text-sm line-clamp-2 mb-4">{item.recipe.description}</p>
+                    <div className="flex items-center gap-4 text-xs text-slate-400 font-bold uppercase tracking-wider mb-6">
+                      <span className="flex items-center"><i className="fas fa-clock mr-1.5"></i> {item.recipe.prepTime}</span>
+                      <span className="flex items-center"><i className="fas fa-user-friends mr-1.5"></i> {item.recipe.servings}</span>
+                    </div>
+                    
+                    {/* Distribution Action Row */}
+                    <div className="border-t border-slate-50 pt-4">
+                      {activeSession ? (
+                        <button 
+                          onClick={(e) => handleResumeDistribution(e, item, activeSession)}
+                          className="w-full bg-blue-50 hover:bg-blue-100 text-blue-600 text-sm font-bold py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2"
+                        >
+                          <i className="fas fa-sync fa-spin text-xs"></i>
+                          Resume Distribution
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={(e) => handleStartDistribution(e, item)}
+                          className="w-full bg-nb-ink text-white text-sm font-bold py-2.5 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+                        >
+                          <i className="fas fa-play text-xs"></i>
+                          Start Distribution
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="bg-slate-50 px-6 py-3 border-t border-slate-100 flex justify-between items-center">
+                     <span className="text-xs text-slate-400">Saved on {item.createdAt?.toDate().toLocaleDateString()}</span>
+                     <span className="text-xs font-bold text-nb-blue">View Meal <i className="fas fa-arrow-right ml-1"></i></span>
                   </div>
                 </div>
-                <div className="bg-slate-50 px-6 py-3 border-t border-slate-100 flex justify-between items-center">
-                   <span className="text-xs text-slate-400">Saved on {item.createdAt?.toDate().toLocaleDateString()}</span>
-                   <span className="text-xs font-bold text-nb-blue">View Recipe <i className="fas fa-arrow-right ml-1"></i></span>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       ) : (
@@ -209,9 +270,9 @@ export default function MealPlansPage() {
           <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300 border border-slate-100">
             <i className="fas fa-utensils text-3xl"></i>
           </div>
-          <h3 className="text-xl font-bold text-nb-ink mb-2">Chef's Recommendation</h3>
+          <h3 className="text-xl font-bold text-nb-ink mb-2">Smart Meals Generator</h3>
           <p className="text-slate-400 mb-8 max-w-md mx-auto">
-            Generate a creative recipe based on your current inventory to reduce waste.
+            Generate mass meal plans based on your current inventory to reduce waste.
           </p>
           
           <button 
@@ -394,19 +455,36 @@ export default function MealPlansPage() {
                 </h3>
                 {isEditing ? (
                     <textarea 
-                        value={recipe.ingredients.join('\n')}
-                        onChange={(e) => setRecipe({...recipe, ingredients: e.target.value.split('\n')})}
+                        value={Array.isArray(recipe.ingredients) 
+                          ? typeof recipe.ingredients[0] === 'string'
+                            ? (recipe.ingredients as unknown as string[]).join('\n')
+                            : (recipe.ingredients as unknown as string[]).map((ing: any) => 
+                                `${ing.estimatedQuantity} ${ing.unit} ${ing.productName}`
+                              ).join('\n')
+                          : ''
+                        }
+                        onChange={(e) => {
+                          // For editing, keep as strings for simplicity
+                          setRecipe({...recipe, ingredients: e.target.value.split('\n') as any});
+                        }}
                         className="w-full text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:border-nb-blue outline-none min-h-[300px]"
                         placeholder="One ingredient per line"
                     />
                 ) : (
                     <ul className="space-y-3">
-                    {recipe.ingredients.map((item, i) => (
+                    {recipe.ingredients.map((item, i) => {
+                      // Handle both string and structured ingredients
+                      const displayText = typeof item === 'string' 
+                        ? item 
+                        : `${item.estimatedQuantity} ${item.unit} ${item.productName}${item.totalAmount ? ` (${item.totalAmount})` : ''}`;
+                      
+                      return (
                         <li key={i} className="flex items-start text-sm text-slate-600 group">
-                        <span className="w-1.5 h-1.5 rounded-full bg-slate-300 mt-1.5 mr-3 group-hover:bg-nb-blue transition-colors"></span>
-                        <span className="group-hover:text-nb-ink transition-colors">{item}</span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-300 mt-1.5 mr-3 group-hover:bg-nb-blue transition-colors"></span>
+                          <span className="group-hover:text-nb-ink transition-colors">{displayText}</span>
                         </li>
-                    ))}
+                      );
+                    })}
                     </ul>
                 )}
               </div>
@@ -441,6 +519,17 @@ export default function MealPlansPage() {
         </div>
       )}
       </>
+      )}
+      {distributionRecipe && (
+        <DistributionModal
+          recipe={distributionRecipe}
+          activeSession={currentActiveSession}
+          onClose={handleCloseDistribution}
+          onComplete={() => {
+            handleCloseDistribution();
+          }}
+          inventory={inventory}
+        />
       )}
     </div>
   );
