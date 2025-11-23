@@ -78,15 +78,7 @@ export default function CharityDashboard() {
     <>
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="nb-card p-6 flex flex-col justify-between h-40">
-              <div className="w-10 h-10 bg-nb-blue rounded-full flex items-center justify-center text-white mb-4 shadow-lg shadow-nb-blue/20">
-                  <i className="fas fa-weight-hanging"></i>
-              </div>
-              <div>
-                  <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Total Rescued</p>
-                  <p className="font-display text-3xl font-bold text-nb-ink mt-1">1,240 <span className="text-base text-slate-400 font-sans font-medium">kg</span></p>
-              </div>
-          </div>
+          
           <div className="nb-card p-6 flex flex-col justify-between h-40">
               <div className="w-10 h-10 bg-nb-teal rounded-full flex items-center justify-center text-white mb-4 shadow-lg shadow-nb-teal/20">
                   <i className="fas fa-utensils"></i>
