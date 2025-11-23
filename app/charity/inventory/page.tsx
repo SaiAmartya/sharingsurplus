@@ -277,12 +277,24 @@ export default function CharityInventory() {
               setRequestData({ item: "", quantity: "", details: "", urgency: "medium" });
               setIsRequestModalOpen(true);
             }}
-            className="bg-nb-blue text-white px-4 py-2 rounded-xl font-bold shadow-glow hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm focus:outline-none"
+            className="hidden md:flex bg-nb-blue text-white px-4 py-2 rounded-xl font-bold shadow-glow hover:bg-indigo-700 transition-colors items-center gap-2 text-sm focus:outline-none"
           >
             <i className="fas fa-bullhorn"></i>
             Request Food
           </button>
         </div>
+
+        {/* Mobile Request FAB */}
+        <button
+          onClick={() => {
+            setEditingRequest(null);
+            setRequestData({ item: "", quantity: "", details: "", urgency: "medium" });
+            setIsRequestModalOpen(true);
+          }}
+          className="md:hidden fixed bottom-24 right-4 z-40 w-14 h-14 bg-nb-blue text-white rounded-full shadow-xl flex items-center justify-center hover:bg-indigo-700 transition-colors focus:outline-none"
+        >
+          <i className="fas fa-bullhorn text-xl"></i>
+        </button>
 
         {activeTab === 'inventory' ? (
           inventory.length === 0 ? (
@@ -293,18 +305,18 @@ export default function CharityInventory() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-6 px-6 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  <div className="col-span-2">Product</div>
-                  <div>Qty</div>
-                  <div>Expiry</div>
-                  <div>Score</div>
+              <div className="grid grid-cols-[1fr_auto_auto] md:grid-cols-6 px-6 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider gap-2 md:gap-0">
+                  <div className="col-span-1 md:col-span-2">Product</div>
+                  <div className="text-center md:text-left">Qty</div>
+                  <div className="hidden md:block">Expiry</div>
+                  <div className="hidden md:block">Score</div>
                   <div className="text-right">Action</div>
               </div>
 
               {inventory.map((item) => (
-                <div key={item.id} className="bg-white rounded-2xl p-4 grid grid-cols-6 items-center shadow-sm hover:shadow-md hover:translate-y-[-2px] transition-all border border-transparent hover:border-nb-blue/20 group">
+                <div key={item.id} className="bg-white rounded-2xl p-4 grid grid-cols-[1fr_auto_auto] md:grid-cols-6 items-center shadow-sm hover:shadow-md hover:translate-y-[-2px] transition-all border border-transparent hover:border-nb-blue/20 group gap-2 md:gap-0">
                     {/* Product Info */}
-                    <div className="col-span-2 flex items-center">
+                    <div className="col-span-1 md:col-span-2 flex items-center min-w-0">
                         <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center mr-4 overflow-hidden shrink-0 border border-slate-100">
                             {item.imageUrl ? (
                               <img src={item.imageUrl} alt={item.productName} className="w-full h-full object-cover" />
@@ -312,15 +324,16 @@ export default function CharityInventory() {
                               <i className="fas fa-box text-slate-300"></i>
                             )}
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                             <p className="font-bold text-nb-ink truncate pr-2">{item.productName}</p>
                             <p className="text-xs text-slate-400 font-medium truncate">{item.brand}</p>
+                            <p className="text-xs text-slate-400 font-medium truncate md:hidden">Expiry: {formatDate(item.expiryDate)}</p>
                         </div>
                     </div>
 
                     {/* Quantity */}
-                    <div>
-                      <div className="font-medium text-slate-600 bg-slate-50 px-3 py-1 rounded-lg w-max">
+                    <div className="flex justify-center md:justify-start">
+                      <div className="font-medium text-slate-600 bg-slate-50 px-3 py-1 rounded-lg w-max text-center md:text-left">
                         <div className="font-bold text-nb-ink">{item.quantity} units</div>
                         {(item.reservedQuantity && item.reservedQuantity > 0) && (
                           <div className="text-xs text-slate-500 mt-0.5">
@@ -331,12 +344,12 @@ export default function CharityInventory() {
                     </div>
 
                     {/* Expiry */}
-                    <div className="font-medium text-slate-600">
+                    <div className="font-medium text-slate-600 hidden md:block">
                       {formatDate(item.expiryDate)}
                     </div>
 
                     {/* Score */}
-                    <div>
+                    <div className="hidden md:block">
                       <span className={`px-3 py-1 rounded-full text-xs font-bold ${getScoreColor(item.nutriScore)}`}>
                         {item.nutriScore || '?'}
                       </span>
