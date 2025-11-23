@@ -427,47 +427,51 @@ export default function CharityInventory() {
         ) : (
           // Distribution History Tab
           distributionHistory.length === 0 ? (
-            <div className="text-center py-12 text-slate-400">
-              <i className="fas fa-history text-4xl mb-3 opacity-50"></i>
-              <p>No distribution history yet.</p>
-              <p className="text-sm">Complete distributions will appear here.</p>
+            <div className="text-center py-16 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
+              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm text-slate-300 text-2xl">
+                <i className="fas fa-history"></i>
+              </div>
+              <p className="font-bold text-slate-500">No distribution history yet.</p>
+              <p className="text-sm text-slate-400 mt-2">Complete distributions will appear here.</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {distributionHistory.map((session) => (
-                <div key={session.id} className="bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition-all border border-transparent hover:border-nb-teal/20">
-                  <div className="flex justify-between items-start mb-3">
+                <div key={session.id} className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-float transition-all border border-slate-100 group">
+                  <div className="flex justify-between items-start mb-4">
                     <div className="flex-1">
-                      <h3 className="font-display text-lg font-bold text-nb-ink mb-1">
+                      <h3 className="font-display text-xl font-bold text-nb-ink mb-1 group-hover:text-nb-teal transition-colors">
                         {session.recipeName}
                       </h3>
-                      <div className="flex items-center gap-2 text-xs text-slate-500">
-                        <span className="font-bold">{formatDate(session.completedAt!)}</span>
-                        <span>•</span>
-                        <span>by {session.completedByName || 'Unknown'}</span>
+                      <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
+                        <span className="flex items-center gap-1"><i className="fas fa-calendar"></i> {formatDate(session.completedAt!)}</span>
+                        <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                        <span className="flex items-center gap-1"><i className="fas fa-user"></i> {session.completedByName || 'Unknown'}</span>
                       </div>
                     </div>
-                    <div className="bg-nb-teal-soft text-nb-teal px-3 py-1 rounded-lg text-sm font-bold">
-                      <i className="fas fa-utensils mr-1"></i>
-                      {session.distributedMealCount} meals
+                    <div className="bg-nb-teal-soft text-nb-teal px-4 py-2 rounded-xl text-sm font-bold flex flex-col items-center min-w-[80px]">
+                      <span className="text-xl font-display">{session.distributedMealCount}</span>
+                      <span className="text-[10px] uppercase tracking-wider">Meals</span>
                     </div>
                   </div>
 
                   {/* Ingredient Usage Summary */}
-                  <div className="bg-slate-50 rounded-xl p-3 mt-3">
-                    <p className="text-xs font-bold text-slate-600 mb-2 uppercase tracking-wide">Ingredients Used:</p>
-                    <div className="space-y-1">
+                  <div className="bg-slate-50 rounded-xl p-4 mt-4 border border-slate-100">
+                    <p className="text-xs font-bold text-slate-400 mb-3 uppercase tracking-wider flex items-center gap-2">
+                      <i className="fas fa-carrot"></i> Ingredients Used
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {session.ingredientUsage.map((ing, idx) => (
-                        <div key={idx} className="flex justify-between items-center text-sm">
-                          <span className="text-slate-700">
+                        <div key={idx} className="flex justify-between items-center text-sm bg-white p-2 rounded-lg border border-slate-100">
+                          <span className="text-slate-700 font-medium truncate pr-2">
                             {ing.productName}
                             {!ing.deductedFromInventory && (
-                              <span className="ml-2 text-xs text-yellow-600">
+                              <span className="ml-2 text-xs text-orange-500" title="Not deducted from inventory">
                                 <i className="fas fa-exclamation-triangle"></i>
                               </span>
                             )}
                           </span>
-                          <span className="font-bold text-nb-ink">
+                          <span className="font-bold text-nb-ink whitespace-nowrap text-xs bg-slate-100 px-2 py-1 rounded">
                             {ing.actualQuantity || ing.expectedQuantity} {ing.expectedUnit}
                           </span>
                         </div>
@@ -475,28 +479,28 @@ export default function CharityInventory() {
                     </div>
                     
                     {session.hasVariance && (
-                      <div className="mt-2 pt-2 border-t border-slate-200">
-                        <p className="text-xs text-yellow-700">
-                          <i className="fas fa-info-circle mr-1"></i>
-                          Some variance detected between expected and actual usage.
+                      <div className="mt-3 pt-3 border-t border-slate-200">
+                        <p className="text-xs text-orange-600 font-medium flex items-center gap-2">
+                          <i className="fas fa-info-circle"></i>
+                          Variance detected between expected and actual usage.
                         </p>
                       </div>
                     )}
                   </div>
 
                   {/* Meal Count Details */}
-                  <div className="grid grid-cols-3 gap-2 mt-3">
-                    <div className="bg-blue-50 p-2 rounded-lg text-center">
-                      <p className="text-xs text-blue-600 font-bold">INITIAL</p>
-                      <p className="text-lg font-display font-bold text-blue-900">{session.initialMealCount}</p>
+                  <div className="grid grid-cols-3 gap-3 mt-4">
+                    <div className="bg-blue-50 p-3 rounded-xl text-center border border-blue-100">
+                      <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider mb-1">INITIAL</p>
+                      <p className="text-xl font-display font-bold text-blue-900">{session.initialMealCount}</p>
                     </div>
-                    <div className="bg-red-50 p-2 rounded-lg text-center">
-                      <p className="text-xs text-red-600 font-bold">REMAINING</p>
-                      <p className="text-lg font-display font-bold text-red-900">{session.finalMealCount}</p>
+                    <div className="bg-red-50 p-3 rounded-xl text-center border border-red-100">
+                      <p className="text-[10px] text-red-600 font-bold uppercase tracking-wider mb-1">REMAINING</p>
+                      <p className="text-xl font-display font-bold text-red-900">{session.finalMealCount}</p>
                     </div>
-                    <div className="bg-green-50 p-2 rounded-lg text-center">
-                      <p className="text-xs text-green-600 font-bold">SERVED</p>
-                      <p className="text-lg font-display font-bold text-green-900">{session.distributedMealCount}</p>
+                    <div className="bg-green-50 p-3 rounded-xl text-center border border-green-100">
+                      <p className="text-[10px] text-green-600 font-bold uppercase tracking-wider mb-1">SERVED</p>
+                      <p className="text-xl font-display font-bold text-green-900">{session.distributedMealCount}</p>
                     </div>
                   </div>
                 </div>

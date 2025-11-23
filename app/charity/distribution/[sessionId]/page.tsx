@@ -329,78 +329,109 @@ export default function DistributionCountingPage() {
         </p>
       </div>
 
-      {/* Progress Steps */}
-      <div className="mb-8 bg-white rounded-2xl p-6 shadow-float">
-        <div className="flex items-center justify-between mb-4">
-          <div className={`flex-1 text-center ${step === 'initial' ? 'text-nb-teal' : 'text-slate-400'}`}>
-            <div className={`w-10 h-10 rounded-full mx-auto mb-2 flex items-center justify-center ${
-              step === 'initial' ? 'bg-nb-teal text-white' : step === 'final' || step === 'confirm' ? 'bg-green-500 text-white' : 'bg-slate-200'
+      {/* Progress Steps - Neo-Bauhaus Route Line */}
+      <div className="mb-8 bg-white rounded-3xl p-8 shadow-float relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-full -mr-10 -mt-10"></div>
+        
+        <div className="relative z-10 flex items-center justify-between">
+          {/* Step 1 */}
+          <div className={`flex flex-col items-center relative z-10 transition-opacity duration-300 ${step === 'initial' ? 'opacity-100' : 'opacity-60'}`}>
+            <div className={`w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold mb-3 transition-all duration-300 shadow-lg ${
+              step === 'initial' ? 'bg-nb-teal text-white scale-110 ring-4 ring-nb-teal/20' : 
+              step === 'final' || step === 'confirm' ? 'bg-nb-teal text-white' : 'bg-slate-100 text-slate-400'
             }`}>
               {step === 'final' || step === 'confirm' ? <i className="fas fa-check"></i> : '1'}
             </div>
-            <p className="text-xs font-bold">Initial Count</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-nb-ink">Initial Count</p>
           </div>
-          <div className="flex-1 h-1 bg-slate-200 mx-2">
-            <div className={`h-full transition-all ${step === 'final' || step === 'confirm' ? 'bg-nb-teal w-full' : 'w-0'}`}></div>
+
+          {/* Connector 1 */}
+          <div className="flex-1 h-3 bg-slate-100 mx-4 rounded-full overflow-hidden">
+            <div className={`h-full bg-nb-teal transition-all duration-500 ease-out rounded-full ${
+              step === 'final' || step === 'confirm' ? 'w-full' : 'w-0'
+            }`}></div>
           </div>
-          <div className={`flex-1 text-center ${step === 'final' ? 'text-nb-teal' : 'text-slate-400'}`}>
-            <div className={`w-10 h-10 rounded-full mx-auto mb-2 flex items-center justify-center ${
-              step === 'final' ? 'bg-nb-teal text-white' : step === 'confirm' ? 'bg-green-500 text-white' : 'bg-slate-200'
+
+          {/* Step 2 */}
+          <div className={`flex flex-col items-center relative z-10 transition-opacity duration-300 ${step === 'final' ? 'opacity-100' : 'opacity-60'}`}>
+            <div className={`w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold mb-3 transition-all duration-300 shadow-lg ${
+              step === 'final' ? 'bg-nb-teal text-white scale-110 ring-4 ring-nb-teal/20' : 
+              step === 'confirm' ? 'bg-nb-teal text-white' : 'bg-slate-100 text-slate-400'
             }`}>
               {step === 'confirm' ? <i className="fas fa-check"></i> : '2'}
             </div>
-            <p className="text-xs font-bold">Final Count</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-nb-ink">Final Count</p>
           </div>
-          <div className="flex-1 h-1 bg-slate-200 mx-2">
-            <div className={`h-full transition-all ${step === 'confirm' ? 'bg-nb-teal w-full' : 'w-0'}`}></div>
+
+          {/* Connector 2 */}
+          <div className="flex-1 h-3 bg-slate-100 mx-4 rounded-full overflow-hidden">
+            <div className={`h-full bg-nb-teal transition-all duration-500 ease-out rounded-full ${
+              step === 'confirm' ? 'w-full' : 'w-0'
+            }`}></div>
           </div>
-          <div className={`flex-1 text-center ${step === 'confirm' ? 'text-nb-teal' : 'text-slate-400'}`}>
-            <div className={`w-10 h-10 rounded-full mx-auto mb-2 flex items-center justify-center ${
-              step === 'confirm' ? 'bg-nb-teal text-white' : 'bg-slate-200'
+
+          {/* Step 3 */}
+          <div className={`flex flex-col items-center relative z-10 transition-opacity duration-300 ${step === 'confirm' ? 'opacity-100' : 'opacity-60'}`}>
+            <div className={`w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold mb-3 transition-all duration-300 shadow-lg ${
+              step === 'confirm' ? 'bg-nb-teal text-white scale-110 ring-4 ring-nb-teal/20' : 'bg-slate-100 text-slate-400'
             }`}>
               3
             </div>
-            <p className="text-xs font-bold">Confirm</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-nb-ink">Confirm</p>
           </div>
         </div>
       </div>
 
       {/* Step Content */}
-      <div className="bg-white rounded-2xl p-8 shadow-float">
+      <div className="bg-white rounded-3xl p-8 shadow-float relative overflow-hidden">
+        {/* Background Decoration */}
+        <div className="absolute top-0 left-0 w-full h-2 bg-nb-teal"></div>
+
         {step === 'initial' && (
-          <div>
-            <h2 className="font-display text-2xl font-bold text-nb-ink mb-4">
+          <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+            <h2 className="font-display text-3xl font-bold text-nb-ink mb-2">
               Step 1: Initial Meal Count
             </h2>
-            <p className="text-slate-600 mb-6">
+            <p className="text-slate-500 mb-8 text-lg">
               How many meal plans are you starting with for this distribution?
             </p>
 
             {initialMealCount > 0 && (
-              <div className="mb-4 p-4 bg-nb-teal-soft border-2 border-nb-teal rounded-xl">
-                <p className="text-sm text-nb-teal font-bold mb-1">
-                  <i className="fas fa-robot mr-2"></i>
-                  AI-Suggested Count
-                </p>
-                <p className="text-xs text-slate-600">
-                  Based on your current inventory, you can prepare up to <strong>{initialMealCount} meals</strong> with this recipe.
-                </p>
+              <div className="mb-8 p-6 bg-nb-teal rounded-2xl text-white shadow-lg relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mt-10"></div>
+                <div className="flex items-start gap-4 relative z-10">
+                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-2xl backdrop-blur-sm">
+                    <i className="fas fa-robot"></i>
+                  </div>
+                  <div>
+                    <p className="font-bold text-teal-100 text-sm uppercase tracking-wider mb-1">AI Suggestion</p>
+                    <p className="text-lg font-medium leading-relaxed">
+                      Based on your inventory, you can prepare up to <strong className="text-white text-2xl mx-1">{initialMealCount}</strong> meals.
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 
-            <div className="mb-6">
-              <label className="block text-sm font-bold text-nb-ink mb-2">
+            <div className="mb-8">
+              <label className="block text-sm font-bold text-slate-400 uppercase tracking-wider mb-3 ml-1">
                 Initial Meal Count
               </label>
-              <input
-                type="number"
-                min="1"
-                value={initialMealCount || ''}
-                onChange={(e) => setInitialMealCount(parseInt(e.target.value) || 0)}
-                className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-nb-teal text-lg"
-                placeholder="e.g., 100"
-              />
-              <p className="text-xs text-slate-500 mt-2">
+              <div className="relative">
+                <input
+                  type="number"
+                  min="1"
+                  value={initialMealCount || ''}
+                  onChange={(e) => setInitialMealCount(parseInt(e.target.value) || 0)}
+                  className="w-full px-6 py-5 bg-slate-100 border-2 border-transparent rounded-2xl focus:bg-white focus:border-nb-teal focus:ring-4 focus:ring-nb-teal/10 text-3xl font-display font-bold text-nb-ink placeholder:text-slate-300 transition-all outline-none"
+                  placeholder="0"
+                />
+                <div className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 font-bold">
+                  meals
+                </div>
+              </div>
+              <p className="text-sm text-slate-500 mt-3 ml-1 flex items-center gap-2">
+                <i className="fas fa-info-circle"></i>
                 {initialMealCount > 0 
                   ? "You can adjust this number based on actual preparation."
                   : "Enter the number of meal portions you're planning to distribute."
@@ -408,18 +439,18 @@ export default function DistributionCountingPage() {
               </p>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex gap-4">
               <button
                 onClick={handleSetInitialCount}
                 disabled={initialMealCount <= 0}
-                className="flex-1 bg-nb-teal hover:bg-nb-teal/90 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-float disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 bg-nb-ink hover:bg-slate-800 text-white px-8 py-4 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-3 text-lg"
               >
-                Continue to Final Count
-                <i className="fas fa-arrow-right ml-2"></i>
+                Continue
+                <i className="fas fa-arrow-right"></i>
               </button>
               <button
                 onClick={handleCancel}
-                className="px-6 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition-all"
+                className="px-8 py-4 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-all"
               >
                 Cancel
               </button>
@@ -428,61 +459,69 @@ export default function DistributionCountingPage() {
         )}
 
         {step === 'final' && (
-          <div>
-            <h2 className="font-display text-2xl font-bold text-nb-ink mb-4">
+          <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+            <h2 className="font-display text-3xl font-bold text-nb-ink mb-2">
               Step 2: Final Meal Count
             </h2>
-            <p className="text-slate-600 mb-6">
+            <p className="text-slate-500 mb-8 text-lg">
               After distribution, how many meal plans are left?
             </p>
 
-            <div className="bg-nb-teal-soft p-4 rounded-xl mb-6">
-              <p className="text-sm text-nb-ink">
-                <strong>Initial Count:</strong> {initialMealCount} meals
-              </p>
+            <div className="bg-slate-50 p-6 rounded-2xl mb-8 flex items-center justify-between border border-slate-100">
+              <div>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Starting With</p>
+                <p className="text-3xl font-display font-bold text-nb-ink">{initialMealCount}</p>
+              </div>
             </div>
 
-            <div className="mb-6">
-              <label className="block text-sm font-bold text-nb-ink mb-2">
-                Final Meal Count (Remaining)
+            <div className="mb-8">
+              <label className="block text-sm font-bold text-slate-400 uppercase tracking-wider mb-3 ml-1">
+                Remaining Meals (Leftover)
               </label>
-              <input
-                type="number"
-                min="0"
-                max={initialMealCount}
-                value={finalMealCount || ''}
-                onChange={(e) => setFinalMealCount(parseInt(e.target.value) || 0)}
-                className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-nb-teal text-lg"
-                placeholder="e.g., 5"
-              />
-              <p className="text-xs text-slate-500 mt-2">
-                Enter how many meal portions were not distributed (leftover).
-              </p>
+              <div className="relative">
+                <input
+                  type="number"
+                  min="0"
+                  max={initialMealCount}
+                  value={finalMealCount || ''}
+                  onChange={(e) => setFinalMealCount(parseInt(e.target.value) || 0)}
+                  className="w-full px-6 py-5 bg-slate-100 border-2 border-transparent rounded-2xl focus:bg-white focus:border-nb-teal focus:ring-4 focus:ring-nb-teal/10 text-3xl font-display font-bold text-nb-ink placeholder:text-slate-300 transition-all outline-none"
+                  placeholder="0"
+                />
+                <div className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 font-bold">
+                  meals
+                </div>
+              </div>
             </div>
 
             {finalMealCount >= 0 && (
-              <div className="bg-green-50 border-2 border-green-300 p-4 rounded-xl mb-6">
-                <p className="text-green-800 font-bold">
-                  <i className="fas fa-calculator mr-2"></i>
-                  Meals Distributed: {initialMealCount - finalMealCount}
-                </p>
+              <div className="bg-white border border-nb-teal p-6 rounded-2xl mb-8 flex items-center gap-4">
+                <div className="w-12 h-12 bg-nb-teal rounded-full flex items-center justify-center text-white text-xl shrink-0">
+                  <i className="fas fa-check"></i>
+                </div>
+                <div>
+                  <p className="text-nb-ink font-bold text-lg">
+                    Total Distributed: {initialMealCount - finalMealCount} Meals
+                  </p>
+                  <p className="text-slate-500 text-sm">This amount will be deducted from inventory.</p>
+                </div>
               </div>
             )}
 
-            <div className="flex gap-3">
+            <div className="flex gap-4">
               <button
                 onClick={handleSetFinalCount}
                 disabled={finalMealCount < 0 || finalMealCount > initialMealCount}
-                className="flex-1 bg-nb-teal hover:bg-nb-teal/90 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-float disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 bg-nb-ink hover:bg-slate-800 text-white px-8 py-4 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-3 text-lg"
               >
-                Continue to Confirmation
-                <i className="fas fa-arrow-right ml-2"></i>
+                Review & Confirm
+                <i className="fas fa-arrow-right"></i>
               </button>
               <button
                 onClick={() => setStep('initial')}
-                className="px-6 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition-all"
+                className="px-8 py-4 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-all flex items-center gap-2"
               >
-                <i className="fas fa-arrow-left mr-2"></i>
+                <i className="fas fa-arrow-left"></i>
                 Back
               </button>
             </div>
@@ -490,53 +529,58 @@ export default function DistributionCountingPage() {
         )}
 
         {step === 'confirm' && (
-          <div>
-            <h2 className="font-display text-2xl font-bold text-nb-ink mb-4">
+          <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+            <h2 className="font-display text-3xl font-bold text-nb-ink mb-2">
               Step 3: Confirm & Complete
             </h2>
-            <p className="text-slate-600 mb-6">
+            <p className="text-slate-500 mb-8 text-lg">
               Review the distribution details before completing.
             </p>
 
-            <div className="space-y-4 mb-6">
-              <div className="bg-slate-50 p-4 rounded-xl">
-                <p className="text-sm text-slate-600 mb-1">Recipe</p>
-                <p className="font-bold text-lg text-nb-ink">{session.recipeName}</p>
+            <div className="space-y-6 mb-8">
+              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Recipe</p>
+                <p className="font-display text-2xl font-bold text-nb-ink">{session.recipeName}</p>
               </div>
 
               <div className="grid grid-cols-3 gap-4">
-                <div className="bg-blue-50 p-4 rounded-xl text-center">
-                  <p className="text-xs text-blue-600 font-bold mb-1">INITIAL</p>
-                  <p className="text-2xl font-display font-bold text-blue-900">{initialMealCount}</p>
+                <div className="bg-white p-6 rounded-2xl text-center border border-slate-200">
+                  <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">INITIAL</p>
+                  <p className="text-4xl font-display font-bold text-nb-blue">{initialMealCount}</p>
                 </div>
-                <div className="bg-red-50 p-4 rounded-xl text-center">
-                  <p className="text-xs text-red-600 font-bold mb-1">REMAINING</p>
-                  <p className="text-2xl font-display font-bold text-red-900">{finalMealCount}</p>
+                <div className="bg-white p-6 rounded-2xl text-center border border-slate-200">
+                  <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">REMAINING</p>
+                  <p className="text-4xl font-display font-bold text-nb-red">{finalMealCount}</p>
                 </div>
-                <div className="bg-green-50 p-4 rounded-xl text-center">
-                  <p className="text-xs text-green-600 font-bold mb-1">DISTRIBUTED</p>
-                  <p className="text-2xl font-display font-bold text-green-900">{distributedCount}</p>
+                <div className="bg-white p-6 rounded-2xl text-center border border-nb-teal shadow-sm ring-4 ring-nb-teal/5">
+                  <p className="text-xs text-nb-teal font-bold uppercase tracking-wider mb-2">DISTRIBUTED</p>
+                  <p className="text-4xl font-display font-bold text-nb-teal">{distributedCount}</p>
                 </div>
               </div>
 
-              <div className="bg-yellow-50 border-2 border-yellow-300 p-4 rounded-xl">
-                <p className="text-sm text-yellow-800">
-                  <i className="fas fa-info-circle mr-2"></i>
-                  <strong>Important:</strong> Completing this distribution will automatically deduct
-                  the calculated ingredient amounts from your inventory based on the number of meals distributed.
-                  Inventory quantities will never go below zero.
-                </p>
+              <div className="bg-white border border-orange-200 p-6 rounded-2xl flex gap-4">
+                <i className="fas fa-info-circle text-orange-500 text-xl mt-1"></i>
+                <div>
+                  <p className="text-orange-900 font-bold mb-1">Inventory Update</p>
+                  <p className="text-sm text-orange-800/80 leading-relaxed">
+                    Completing this distribution will automatically deduct the calculated ingredient amounts from your inventory.
+                    Quantities will never drop below zero.
+                  </p>
+                </div>
               </div>
 
               {/* Show ingredients that will be deducted */}
-              <div className="border-2 border-slate-200 rounded-xl p-4">
-                <h3 className="font-bold text-nb-ink mb-3">Ingredients to be Deducted:</h3>
-                <div className="space-y-2">
+              <div className="border border-slate-200 rounded-2xl p-6">
+                <h3 className="font-bold text-nb-ink mb-4 flex items-center gap-2">
+                  <i className="fas fa-clipboard-list text-slate-400"></i>
+                  Deduction Summary
+                </h3>
+                <div className="space-y-3">
                   {session.ingredientUsage.map((ing, idx) => (
-                    <div key={idx} className="flex justify-between items-center text-sm">
-                      <span className="text-slate-700">{ing.productName}</span>
-                      <span className="font-bold text-nb-ink">
-                        {Math.ceil((ing.expectedQuantity * distributedCount) / parseInt(session.plannedServings.split(' ')[0] || '1'))} {ing.expectedUnit}
+                    <div key={idx} className="flex justify-between items-center text-sm p-3 bg-slate-50 rounded-xl">
+                      <span className="text-slate-700 font-medium">{ing.productName}</span>
+                      <span className="font-bold text-nb-ink bg-white px-3 py-1 rounded-lg shadow-sm border border-slate-100">
+                        - {Math.ceil((ing.expectedQuantity * distributedCount) / parseInt(session.plannedServings.split(' ')[0] || '1'))} {ing.expectedUnit}
                       </span>
                     </div>
                   ))}
@@ -544,16 +588,16 @@ export default function DistributionCountingPage() {
               </div>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex gap-4">
               <button
                 onClick={handleCompleteDistribution}
                 disabled={isCompleting}
-                className="flex-1 bg-nb-teal hover:bg-nb-teal/90 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-float disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 bg-nb-teal hover:bg-teal-500 text-white px-8 py-4 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 text-lg"
               >
                 {isCompleting ? (
                   <>
                     <i className="fas fa-spinner fa-spin"></i>
-                    Completing...
+                    Processing...
                   </>
                 ) : (
                   <>
@@ -565,9 +609,9 @@ export default function DistributionCountingPage() {
               <button
                 onClick={() => setStep('final')}
                 disabled={isCompleting}
-                className="px-6 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition-all disabled:opacity-50"
+                className="px-8 py-4 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-all flex items-center gap-2"
               >
-                <i className="fas fa-arrow-left mr-2"></i>
+                <i className="fas fa-arrow-left"></i>
                 Back
               </button>
             </div>

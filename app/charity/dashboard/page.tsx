@@ -221,11 +221,10 @@ export default function CharityDashboard() {
   return (
     <>
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="font-display text-3xl font-bold text-nb-ink">Dashboard</h1>
+      <div className="flex justify-end items-center mb-6">
         <button
           onClick={handleStartDistribution}
-          className="bg-nb-teal hover:bg-nb-teal/90 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-float hover:shadow-float-lg flex items-center gap-2"
+          className="bg-nb-teal hover:bg-teal-500 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-float hover:shadow-float-lg flex items-center gap-2"
         >
           <i className="fas fa-play"></i>
           Start Distribution
@@ -235,7 +234,7 @@ export default function CharityDashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="nb-card p-6 flex flex-col justify-between h-40">
-              <div className="w-10 h-10 bg-nb-blue-soft rounded-full flex items-center justify-center text-nb-blue mb-4">
+              <div className="w-10 h-10 bg-nb-blue rounded-full flex items-center justify-center text-white mb-4 shadow-lg shadow-nb-blue/20">
                   <i className="fas fa-weight-hanging"></i>
               </div>
               <div>
@@ -244,7 +243,7 @@ export default function CharityDashboard() {
               </div>
           </div>
           <div className="nb-card p-6 flex flex-col justify-between h-40">
-              <div className="w-10 h-10 bg-nb-teal-soft rounded-full flex items-center justify-center text-nb-teal mb-4">
+              <div className="w-10 h-10 bg-nb-teal rounded-full flex items-center justify-center text-white mb-4 shadow-lg shadow-nb-teal/20">
                   <i className="fas fa-utensils"></i>
               </div>
               <div>
@@ -253,7 +252,7 @@ export default function CharityDashboard() {
               </div>
           </div>
           <div className="nb-card p-6 flex flex-col justify-between h-40 border-l-4 border-l-nb-red">
-              <div className="w-10 h-10 bg-nb-red-soft rounded-full flex items-center justify-center text-nb-red mb-4">
+              <div className="w-10 h-10 bg-nb-red rounded-full flex items-center justify-center text-white mb-4 shadow-lg shadow-nb-red/20">
                   <i className="fas fa-hourglass-half"></i>
               </div>
               <div>
@@ -262,7 +261,7 @@ export default function CharityDashboard() {
               </div>
           </div>
             <div className="nb-card p-6 flex flex-col justify-between h-40">
-              <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 mb-4">
+              <div className="w-10 h-10 bg-nb-ink rounded-full flex items-center justify-center text-white mb-4 shadow-lg shadow-nb-ink/20">
                   <i className="fas fa-truck"></i>
               </div>
                 <div>
@@ -317,61 +316,69 @@ export default function CharityDashboard() {
 
       {/* Distribution Modal */}
       {showDistributionModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-float-lg">
-            {/* Modal Header */}
-            <div className="bg-nb-ink text-white p-6 flex justify-between items-center">
-              <h2 className="font-display text-2xl font-bold">Start Distribution</h2>
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl flex flex-col animate-in zoom-in-95 duration-200">
+            {/* Modal Header - Clean & Minimal */}
+            <div className="bg-white p-8 border-b border-slate-100 flex justify-between items-center shrink-0">
+              <div>
+                <h2 className="font-display text-3xl font-bold text-nb-ink mb-1">Start Distribution</h2>
+                <p className="text-slate-500 font-medium">Select a meal plan to begin tracking inventory usage.</p>
+              </div>
               <button
                 onClick={() => {
                   setShowDistributionModal(false);
                   setSelectedRecipe(null);
                   setMatchedIngredients([]);
                 }}
-                className="text-white/80 hover:text-white text-2xl"
+                className="bg-slate-100 hover:bg-slate-200 text-slate-500 w-10 h-10 rounded-full flex items-center justify-center transition-all"
               >
                 <i className="fas fa-times"></i>
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+            <div className="p-8 overflow-y-auto flex-1 custom-scrollbar">
               {!selectedRecipe ? (
                 <>
-                  <p className="text-slate-600 mb-4">Select a meal plan to begin distribution:</p>
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="font-bold text-nb-ink text-lg">Saved Meal Plans</h3>
+                    <span className="text-sm text-slate-400">{savedRecipes.length} available</span>
+                  </div>
                   
                   {savedRecipes.length === 0 ? (
-                    <div className="text-center py-12 text-slate-500">
-                      <i className="fas fa-utensils text-4xl mb-4"></i>
-                      <p>No saved meal plans found.</p>
-                      <p className="text-sm mt-2">Create a meal plan first to start distribution.</p>
+                    <div className="text-center py-16 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
+                      <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm text-slate-300 text-2xl">
+                        <i className="fas fa-utensils"></i>
+                      </div>
+                      <p className="font-bold text-slate-500">No saved meal plans found.</p>
+                      <p className="text-sm text-slate-400 mt-2">Create a meal plan first to start distribution.</p>
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {savedRecipes.map(recipe => (
                         <div
                           key={recipe.id}
                           onClick={() => handleSelectRecipe(recipe)}
-                          className="nb-card p-4 cursor-pointer hover:shadow-float transition-all"
+                          className="group bg-white border border-slate-100 p-5 rounded-2xl cursor-pointer hover:shadow-float hover:border-nb-teal/30 transition-all relative overflow-hidden"
                         >
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <h3 className="font-display text-xl font-bold text-nb-ink mb-1">
-                                {recipe.recipe.name}
-                              </h3>
-                              <p className="text-slate-600 text-sm mb-2">{recipe.recipe.description}</p>
-                              <div className="flex flex-wrap gap-2">
-                                <span className="bg-nb-teal-soft text-nb-teal px-2 py-1 rounded text-xs font-bold">
-                                  <i className="fas fa-users mr-1"></i>
-                                  {recipe.recipe.servings}
-                                </span>
-                                <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs font-bold">
-                                  <i className="fas fa-clock mr-1"></i>
-                                  {recipe.recipe.prepTime}
-                                </span>
-                              </div>
+                          <div className="absolute top-0 right-0 w-16 h-16 bg-slate-50 rounded-bl-full -mr-8 -mt-8 group-hover:bg-nb-teal transition-colors"></div>
+                          
+                          <div className="relative z-10">
+                            <h3 className="font-display text-xl font-bold text-nb-ink mb-2 group-hover:text-nb-teal transition-colors">
+                              {recipe.recipe.name}
+                            </h3>
+                            <p className="text-slate-500 text-sm mb-4 line-clamp-2">{recipe.recipe.description}</p>
+                            
+                            <div className="flex flex-wrap gap-2">
+                              <span className="bg-white border border-slate-200 text-slate-600 px-3 py-1 rounded-full text-xs font-bold flex items-center">
+                                <i className="fas fa-users mr-2 text-nb-teal"></i>
+                                {recipe.recipe.servings}
+                              </span>
+                              <span className="bg-white border border-slate-200 text-slate-600 px-3 py-1 rounded-full text-xs font-bold flex items-center">
+                                <i className="fas fa-clock mr-2 text-slate-400"></i>
+                                {recipe.recipe.prepTime}
+                              </span>
                             </div>
-                            <i className="fas fa-chevron-right text-slate-400 ml-4"></i>
                           </div>
                         </div>
                       ))}
@@ -380,65 +387,72 @@ export default function CharityDashboard() {
                 </>
               ) : (
                 <>
-                  <div className="mb-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <button
-                        onClick={() => {
-                          setSelectedRecipe(null);
-                          setMatchedIngredients([]);
-                        }}
-                        className="text-nb-blue hover:text-nb-blue/80"
-                      >
-                        <i className="fas fa-arrow-left mr-2"></i>
-                        Back
-                      </button>
-                    </div>
+                  <div className="mb-8">
+                    <button
+                      onClick={() => {
+                        setSelectedRecipe(null);
+                        setMatchedIngredients([]);
+                      }}
+                      className="text-slate-400 hover:text-nb-teal mb-4 flex items-center gap-2 text-sm font-bold transition-colors"
+                    >
+                      <i className="fas fa-arrow-left"></i>
+                      Back to Recipes
+                    </button>
                     
-                    <h3 className="font-display text-2xl font-bold text-nb-ink mb-2">
-                      {selectedRecipe.recipe.name}
-                    </h3>
-                    <p className="text-slate-600 mb-4">{selectedRecipe.recipe.description}</p>
-                    
-                    <div className="flex gap-3 mb-4">
-                      <span className="bg-nb-teal-soft text-nb-teal px-3 py-1 rounded-lg text-sm font-bold">
-                        <i className="fas fa-users mr-1"></i>
-                        {selectedRecipe.recipe.servings}
-                      </span>
-                      <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg text-sm font-bold">
-                        <i className="fas fa-clock mr-1"></i>
-                        {selectedRecipe.recipe.prepTime}
-                      </span>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-display text-3xl font-bold text-nb-ink mb-2">
+                          {selectedRecipe.recipe.name}
+                        </h3>
+                        <p className="text-slate-600 max-w-2xl">{selectedRecipe.recipe.description}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <div className="text-center bg-white border border-slate-200 text-slate-600 p-3 rounded-2xl min-w-[80px]">
+                          <i className="fas fa-users mb-1 block text-nb-teal"></i>
+                          <span className="font-bold text-sm">{selectedRecipe.recipe.servings}</span>
+                        </div>
+                        <div className="text-center bg-white border border-slate-200 text-slate-600 p-3 rounded-2xl min-w-[80px]">
+                          <i className="fas fa-clock mb-1 block text-slate-400"></i>
+                          <span className="font-bold text-sm">{selectedRecipe.recipe.prepTime}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
                   {/* Ingredient Matching */}
                   <div className="mb-6">
-                    <h4 className="font-bold text-lg text-nb-ink mb-3">Ingredient Inventory Check</h4>
+                    <h4 className="font-display text-xl font-bold text-nb-ink mb-4 flex items-center gap-2">
+                      <span className="w-8 h-8 bg-nb-ink text-white rounded-full flex items-center justify-center text-sm">1</span>
+                      Inventory Check
+                    </h4>
                     
-                    {/* AI Calculated Max Meals */}
+                    {/* AI Calculated Max Meals - Softer Style */}
                     {matchedIngredients.some(ing => ing.inventoryItemId) && (
-                      <div className="mb-4 p-4 bg-nb-teal-soft border-2 border-nb-teal rounded-xl">
-                        <div className="flex items-center justify-between">
+                      <div className="mb-6 p-6 bg-white border border-nb-teal rounded-3xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-nb-teal/5 rounded-full -mr-10 -mt-10"></div>
+                        
+                        <div className="relative z-10 flex items-center justify-between">
                           <div>
-                            <p className="text-sm text-nb-teal font-bold mb-1">
-                              <i className="fas fa-calculator mr-2"></i>
-                              AI-Calibrated Meal Estimate
-                            </p>
-                            <p className="text-xs text-slate-600">
-                              Based on current inventory availability
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="bg-nb-teal text-white px-2 py-1 rounded-lg text-xs font-bold">
+                                <i className="fas fa-robot mr-1"></i> AI CALIBRATED
+                              </span>
+                            </div>
+                            <p className="text-slate-500 font-medium text-sm max-w-xs">
+                              Based on your lowest stock ingredient, we estimate you can serve:
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="text-3xl font-display font-bold text-nb-teal">
+                            <p className="text-5xl font-display font-bold leading-none mb-1 text-nb-teal">
                               {calculateMaxMealsFromInventory()}
                             </p>
-                            <p className="text-xs text-slate-600">meals possible</p>
+                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Meals Possible</p>
                           </div>
                         </div>
                       </div>
                     )}
 
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {matchedIngredients.map((ing, idx) => {
                         const inventoryItem = inventory.find(i => i.id === ing.inventoryItemId);
                         const hasMatch = !!inventoryItem;
@@ -449,46 +463,51 @@ export default function CharityDashboard() {
                         return (
                           <div
                             key={idx}
-                            className={`p-3 rounded-lg border-2 ${
+                            className={`p-4 rounded-2xl transition-all flex items-center justify-between group ${
                               !hasMatch
-                                ? 'bg-yellow-50 border-yellow-300'
+                                ? 'bg-white border border-orange-200'
                                 : validation?.isValid
-                                ? 'bg-green-50 border-green-300'
-                                : 'bg-red-50 border-red-300'
+                                ? 'bg-white border border-slate-200 hover:border-nb-teal/30 hover:shadow-sm'
+                                : 'bg-white border border-red-200'
                             }`}
                           >
-                            <div className="flex justify-between items-start">
-                              <div className="flex-1">
-                                <p className="font-bold text-sm text-nb-ink">
+                            <div className="flex items-center gap-4">
+                              <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                                !hasMatch ? 'bg-orange-500 text-white' :
+                                validation?.isValid ? 'bg-slate-100 text-slate-400 group-hover:bg-nb-teal group-hover:text-white transition-colors' :
+                                'bg-red-500 text-white'
+                              }`}>
+                                <i className={`fas ${!hasMatch ? 'fa-question' : validation?.isValid ? 'fa-check' : 'fa-exclamation'}`}></i>
+                              </div>
+                              <div>
+                                <p className="font-bold text-nb-ink">
                                   {ing.productName}
                                 </p>
-                                <p className="text-xs text-slate-600">
-                                  Needed: {ing.estimatedQuantity} {ing.unit}
-                                </p>
-                                {hasMatch && validation && (
-                                  <p className="text-xs text-slate-600">
-                                    Available: {validation.available} (Total: {inventoryItem.quantity})
-                                  </p>
-                                )}
+                                <div className="flex items-center gap-2 text-xs text-slate-500">
+                                  <span className="bg-slate-100 px-2 py-0.5 rounded-md">{ing.estimatedQuantity} {ing.unit}</span>
+                                  {hasMatch && validation && (
+                                    <span className={`${validation.isValid ? 'text-slate-500' : 'text-red-500 font-bold'}`}>
+                                      Available: {validation.available}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
-                              <div className="ml-2">
-                                {!hasMatch ? (
-                                  <span className="text-yellow-600 text-xs font-bold">
-                                    <i className="fas fa-exclamation-triangle mr-1"></i>
-                                    Not Matched
-                                  </span>
-                                ) : validation?.isValid ? (
-                                  <span className="text-green-600 text-xs font-bold">
-                                    <i className="fas fa-check-circle mr-1"></i>
-                                    Available
-                                  </span>
-                                ) : (
-                                  <span className="text-red-600 text-xs font-bold">
-                                    <i className="fas fa-times-circle mr-1"></i>
-                                    Insufficient
-                                  </span>
-                                )}
-                              </div>
+                            </div>
+                            
+                            <div>
+                              {!hasMatch ? (
+                                <span className="text-orange-500 text-xs font-bold bg-white border border-orange-200 px-3 py-1 rounded-full">
+                                  Missing
+                                </span>
+                              ) : validation?.isValid ? (
+                                <span className="text-nb-teal text-xs font-bold bg-white border border-nb-teal px-3 py-1 rounded-full">
+                                  Ready
+                                </span>
+                              ) : (
+                                <span className="text-red-500 text-xs font-bold bg-white border border-red-200 px-3 py-1 rounded-full">
+                                  Low Stock
+                                </span>
+                              )}
                             </div>
                           </div>
                         );
@@ -496,11 +515,11 @@ export default function CharityDashboard() {
                     </div>
                     
                     {matchedIngredients.some(ing => !ing.inventoryItemId) && (
-                      <div className="mt-3 p-3 bg-yellow-50 border border-yellow-300 rounded-lg">
-                        <p className="text-xs text-yellow-800">
-                          <i className="fas fa-info-circle mr-1"></i>
-                          <strong>Note:</strong> Some ingredients couldn't be automatically matched to inventory.
-                          Distribution will proceed, but manual counting may be needed.
+                      <div className="mt-4 p-4 bg-white border border-orange-200 rounded-2xl flex gap-3 items-start">
+                        <i className="fas fa-info-circle text-orange-500 mt-1"></i>
+                        <p className="text-sm text-orange-800">
+                          <strong>Note:</strong> Some ingredients couldn't be automatically matched.
+                          You can still proceed, but inventory won't be deducted for unmatched items.
                         </p>
                       </div>
                     )}
@@ -511,31 +530,31 @@ export default function CharityDashboard() {
 
             {/* Modal Footer */}
             {selectedRecipe && (
-              <div className="p-6 bg-slate-50 border-t flex justify-end gap-3">
+              <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 shrink-0">
                 <button
                   onClick={() => {
                     setShowDistributionModal(false);
                     setSelectedRecipe(null);
                     setMatchedIngredients([]);
                   }}
-                  className="px-6 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-200 transition-all"
+                  className="px-8 py-4 rounded-xl font-bold text-slate-500 hover:bg-slate-200 hover:text-slate-700 transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleCreateDistribution}
                   disabled={isCreatingDistribution}
-                  className="bg-nb-teal hover:bg-nb-teal/90 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-float disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="bg-nb-teal hover:bg-teal-500 text-white px-8 py-4 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3"
                 >
                   {isCreatingDistribution ? (
                     <>
                       <i className="fas fa-spinner fa-spin"></i>
-                      Creating...
+                      Creating Session...
                     </>
                   ) : (
                     <>
-                      <i className="fas fa-play"></i>
                       Start Distribution
+                      <i className="fas fa-arrow-right"></i>
                     </>
                   )}
                 </button>
