@@ -182,17 +182,6 @@ export default function DonorDashboard() {
                 onDismiss={handleDismissRequest}
               />
             </div>
-
-            {/* Regular Need Card (Placeholder for now) */}
-            <div className="nb-card p-1.5 flex items-stretch opacity-50 mt-12">
-                <div className="w-24 bg-slate-100 rounded-2xl flex items-center justify-center shrink-0">
-                    <i className="fas fa-baby-carriage text-3xl text-slate-300"></i>
-                </div>
-                <div className="p-4 flex-1">
-                    <h3 className="font-display text-lg font-bold text-nb-ink">More coming soon...</h3>
-                    <p className="text-slate-500 text-sm">Check back later</p>
-                </div>
-            </div>
           </>
         ) : (
           <div className="space-y-8">

@@ -115,43 +115,83 @@ export default function RequestCardStack({ requests, onAccept, onDismiss }: Requ
     };
   };
 
-  const getUrgencyColor = (urgency: string) => {
+  const getTheme = (urgency: string) => {
     switch (urgency) {
-      case 'high': return 'bg-nb-red-soft text-nb-red';
-      case 'medium': return 'bg-nb-orange-soft text-nb-orange';
-      case 'low': return 'bg-nb-teal-soft text-nb-teal';
-      default: return 'bg-slate-100 text-slate-500';
+      case 'high': 
+        return {
+          bg: 'bg-nb-red-soft',
+          text: 'text-rose-950',
+          subtext: 'text-rose-800',
+          pillBg: 'bg-white',
+          pillText: 'text-nb-red',
+          iconBg: 'bg-rose-400',
+          bottomPill: 'bg-rose-200/50'
+        };
+      case 'medium':
+        return {
+          bg: 'bg-nb-orange-soft',
+          text: 'text-orange-950',
+          subtext: 'text-orange-800',
+          pillBg: 'bg-white',
+          pillText: 'text-nb-orange',
+          iconBg: 'bg-orange-400',
+          bottomPill: 'bg-orange-200/50'
+        };
+      case 'low':
+        return {
+          bg: 'bg-nb-teal-soft',
+          text: 'text-teal-950',
+          subtext: 'text-teal-800',
+          pillBg: 'bg-white',
+          pillText: 'text-nb-teal',
+          iconBg: 'bg-teal-400',
+          bottomPill: 'bg-teal-200/50'
+        };
+      default:
+        return {
+          bg: 'bg-slate-100',
+          text: 'text-slate-900',
+          subtext: 'text-slate-600',
+          pillBg: 'bg-white',
+          pillText: 'text-slate-600',
+          iconBg: 'bg-slate-300',
+          bottomPill: 'bg-slate-200'
+        };
     }
   };
 
-  const getUrgencyBg = (urgency: string) => {
-    switch (urgency) {
-      case 'high': return 'bg-nb-red-soft';
-      case 'medium': return 'bg-nb-orange-soft';
-      case 'low': return 'bg-nb-teal-soft';
-      default: return 'bg-slate-50';
-    }
-  };
+  const theme = getTheme(currentRequest.urgency);
+  const nextTheme = nextRequest ? getTheme(nextRequest.urgency) : null;
 
   return (
     <div ref={containerRef} className="relative h-80 w-full flex justify-center items-center perspective-1000">
       {/* Next Card (Background) */}
-      {nextRequest && (
+      {nextRequest && nextTheme && (
         <div
-          className={`absolute w-full h-full rounded-3xl p-6 shadow-sm border border-slate-100 bg-white flex flex-col justify-between select-none`}
+          className={`absolute w-full h-full rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between select-none overflow-hidden ${nextTheme.bg}`}
           style={getCardStyle(1, false)}
         >
-           <div className="flex justify-between items-start">
-            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${getUrgencyColor(nextRequest.urgency)}`}>
-              {nextRequest.urgency}
+           {/* Decorative Circle */}
+           <div className={`absolute -top-12 -right-12 w-40 h-40 rounded-full ${nextTheme.iconBg} opacity-20`}></div>
+
+           <div className="relative z-10 flex justify-between items-start">
+            <span className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm ${nextTheme.pillBg} ${nextTheme.pillText}`}>
+              {nextRequest.urgency === 'high' ? 'URGENT' : nextRequest.urgency} • 2km
             </span>
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center bg-white/40`}>
+               <i className={`fas fa-arrow-right ${nextTheme.text} opacity-50`}></i>
+            </div>
           </div>
-          <div>
-            <h3 className="font-display text-3xl font-bold text-nb-ink mb-2">{nextRequest.item}</h3>
-            <p className="text-slate-400 font-medium">{nextRequest.foodBankName || 'Food Bank'}</p>
+          
+          <div className="relative z-10 mt-4">
+            <h3 className={`font-display text-3xl font-bold mb-1 ${nextTheme.text}`}>{nextRequest.item}</h3>
+            <p className={`font-medium ${nextTheme.subtext}`}>{nextRequest.foodBankName || 'Food Bank'}</p>
           </div>
-          <div className="flex items-center text-slate-400 text-sm font-bold">
-             <i className="far fa-clock mr-2"></i> Needed ASAP
+
+          <div className="relative z-10">
+             <div className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-bold ${nextTheme.bottomPill} ${nextTheme.text}`}>
+                <i className="far fa-clock mr-2"></i> Needed by 4 PM
+             </div>
           </div>
         </div>
       )}
@@ -159,7 +199,7 @@ export default function RequestCardStack({ requests, onAccept, onDismiss }: Requ
       {/* Current Card (Top) */}
       <div
         ref={cardRef}
-        className={`absolute w-full h-full rounded-3xl p-6 shadow-xl border border-slate-100 flex flex-col justify-between select-none touch-none ${getUrgencyBg(currentRequest.urgency)}`}
+        className={`absolute w-full h-full rounded-3xl p-6 shadow-xl border border-slate-100 flex flex-col justify-between select-none touch-none overflow-hidden ${theme.bg}`}
         style={getCardStyle(0, true)}
         onMouseDown={handleDragStart}
         onMouseMove={handleDragMove}
@@ -169,73 +209,43 @@ export default function RequestCardStack({ requests, onAccept, onDismiss }: Requ
         onTouchMove={handleDragMove}
         onTouchEnd={handleDragEnd}
       >
+        {/* Decorative Circle */}
+        <div className={`absolute -top-12 -right-12 w-40 h-40 rounded-full ${theme.iconBg} opacity-20`}></div>
+
         {/* Swipe Indicators */}
         {isDragging && (
           <>
-            <div className={`absolute top-8 left-8 border-4 border-nb-red text-nb-red rounded-xl px-4 py-2 font-display font-bold text-2xl uppercase transform -rotate-12 opacity-${Math.min(1, Math.abs(Math.min(0, dragX)) / 100)} transition-opacity`}>
+            <div className={`absolute top-8 left-8 border-4 border-nb-red text-nb-red rounded-xl px-4 py-2 font-display font-bold text-2xl uppercase transform -rotate-12 opacity-${Math.min(1, Math.abs(Math.min(0, dragX)) / 100)} transition-opacity z-50`}>
               Pass
             </div>
-            <div className={`absolute top-8 right-8 border-4 border-nb-teal text-nb-teal rounded-xl px-4 py-2 font-display font-bold text-2xl uppercase transform rotate-12 opacity-${Math.min(1, Math.max(0, dragX) / 100)} transition-opacity`}>
+            <div className={`absolute top-8 right-8 border-4 border-nb-teal text-nb-teal rounded-xl px-4 py-2 font-display font-bold text-2xl uppercase transform rotate-12 opacity-${Math.min(1, Math.max(0, dragX) / 100)} transition-opacity z-50`}>
               Accept
             </div>
           </>
         )}
 
-        <div className="flex justify-between items-start">
-          <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase bg-white/80 backdrop-blur-sm shadow-sm ${
-             currentRequest.urgency === 'high' ? 'text-nb-red' : 
-             currentRequest.urgency === 'medium' ? 'text-nb-orange' : 'text-nb-teal'
-          }`}>
-            {currentRequest.urgency} Priority
+        <div className="relative z-10 flex justify-between items-start">
+          <span className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm ${theme.pillBg} ${theme.pillText}`}>
+            {currentRequest.urgency === 'high' ? 'URGENT' : currentRequest.urgency} • 2km
           </span>
-          <div className="w-10 h-10 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm text-slate-400">
-            <i className="fas fa-hand-holding-heart"></i>
+          <div className="w-10 h-10 bg-white/40 rounded-full flex items-center justify-center shadow-sm cursor-pointer hover:bg-white/60 transition-colors">
+            <i className={`fas fa-arrow-right ${theme.text}`}></i>
           </div>
         </div>
 
-        <div className="mt-4">
-          <h3 className={`font-display text-4xl font-bold mb-2 ${
-             currentRequest.urgency === 'high' ? 'text-rose-950' : 
-             currentRequest.urgency === 'medium' ? 'text-orange-950' : 'text-teal-950'
-          }`}>
+        <div className="relative z-10 mt-2">
+          <h3 className={`font-display text-4xl font-bold mb-2 ${theme.text}`}>
             {currentRequest.item}
           </h3>
 
-          {currentRequest.quantity && (
-            <p className={`font-bold text-xl mb-1 ${
-               currentRequest.urgency === 'high' ? 'text-rose-900' : 
-               currentRequest.urgency === 'medium' ? 'text-orange-900' : 'text-teal-900'
-            }`}>
-              Qty: {currentRequest.quantity}
-            </p>
-          )}
-
-          <p className={`font-medium text-lg ${
-             currentRequest.urgency === 'high' ? 'text-rose-900/60' : 
-             currentRequest.urgency === 'medium' ? 'text-orange-900/60' : 'text-teal-900/60'
-          }`}>
+          <p className={`font-medium text-lg ${theme.subtext}`}>
             {currentRequest.foodBankName || 'Food Bank'}
           </p>
-
-          {currentRequest.details && (
-            <p className={`mt-2 text-sm line-clamp-2 ${
-               currentRequest.urgency === 'high' ? 'text-rose-900/80' : 
-               currentRequest.urgency === 'medium' ? 'text-orange-900/80' : 'text-teal-900/80'
-            }`}>
-              "{currentRequest.details}"
-            </p>
-          )}
         </div>
 
-        <div className="flex items-center justify-between">
-           <div className={`flex items-center text-sm font-bold px-4 py-2 rounded-full bg-white/60 backdrop-blur-sm ${
-             currentRequest.urgency === 'high' ? 'text-rose-900' : 
-             currentRequest.urgency === 'medium' ? 'text-orange-900' : 'text-teal-900'
-           }`}>
-             <i className="far fa-clock mr-2"></i> Needed ASAP
-           </div>
-           <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-             Swipe to decide
+        <div className="relative z-10 flex items-center justify-between">
+           <div className={`flex items-center text-sm font-bold px-4 py-2 rounded-full ${theme.bottomPill} ${theme.text}`}>
+             <i className="far fa-clock mr-2"></i> Needed by 4 PM
            </div>
         </div>
       </div>
