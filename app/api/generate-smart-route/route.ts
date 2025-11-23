@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
-import { getActiveDonations, getFoodBanks } from "@/lib/data";
+import { getActiveDonations, getFoodBanks, getUserProfilesByIds } from "@/lib/data";
 import { getDistanceFromLatLonInKm } from "@/lib/location";
 
 export async function POST(req: Request) {
@@ -80,41 +80,75 @@ export async function POST(req: Request) {
       });
     }
 
-    const candidates = nearbyDonations
+    const donorProfiles = await getUserProfilesByIds(
+      Array.from(new Set(nearbyDonations.map((d) => d.donorId)))
+    );
+
+    type CandidatePickup = (typeof nearbyDonations)[number] & {
+      contactPhone?: string;
+    };
+    type CandidateDropoff = (typeof nearbyFoodBanks)[number] & {
+      contactPhone?: string;
+    };
+
+    const candidates: CandidatePickup[] = nearbyDonations
       .sort((a, b) => a.approxDistKm - b.approxDistKm)
-      .slice(0, 5);
-    const dropoffs = nearbyFoodBanks.slice(0, 5);
+      .slice(0, 5)
+      .map((d) => ({
+        ...d,
+        contactPhone: donorProfiles[d.donorId]?.phoneNumber,
+      }));
+
+    const dropoffs: CandidateDropoff[] = nearbyFoodBanks.slice(0, 5).map((fb) => ({
+      ...fb,
+      contactPhone: fb.phoneNumber,
+    }));
 
     const prompt = `
-    You are an expert logistics coordinator.
-    Create a volunteer route using the data below.
+    <persona>
+    You are an expert logistics coordinator specializing in coordinating food distribution routes for volunteers.
+    </persona>
 
-    Volunteer Location: { lat: ${lat}, lng: ${lng} }
+    <guidelines>
+    - The route should be optimized for applicability to the volunteer's vehicle, location, needs of food banks, etc.
+    - Logic explanations must be very concise and to the point. 
+    - Communicate estimated total time and other properties like "~45 minutes" or "~1 hour" in a very concise manner.
+    - Solely one food bank can have items delivered (always indicates the end of a route). 
+    - Never include donation post ID's in the descriptions.
+    </guidelines>
+
+
+    Volunteer Location (origin): { lat: ${lat}, lng: ${lng} }
 
     Pickups: ${JSON.stringify(
       candidates.map((d) => ({
         id: d.id,
+        sourceId: d.id,
         title: d.title,
         description: d.description,
         weightKg: d.weight,
         pickupWindow: d.pickupWindow,
         location: d.location,
         distanceFromVolunteerKm: d.approxDistKm.toFixed(1),
+        contactPhone: d.contactPhone || "N/A",
       }))
     )}
 
     Dropoffs: ${JSON.stringify(
       dropoffs.map((fb) => ({
         id: fb.uid,
+        sourceId: fb.uid,
         name: fb.organizationName || fb.displayName,
         capabilities: fb.storageCapabilities,
         location: fb.location,
         distanceFromVolunteerKm: fb.approxDistKm.toFixed(1),
+        contactPhone: fb.contactPhone || "N/A",
       }))
     )}
 
     RETURN JSON ONLY with this structure:
     {
+      "origin": { "lat": number, "lng": number },
       "foundRoute": boolean,
       "stops": [
         {
@@ -122,7 +156,9 @@ export async function POST(req: Request) {
           "name": "string",
           "description": "string",
           "location": { "lat": number, "lng": number },
-          "estimatedArrival": "string"
+          "estimatedArrival": "string",
+          "contactPhone": "string",
+          "sourceId": "string"
         }
       ],
       "totalDistance": "string",
@@ -135,7 +171,7 @@ export async function POST(req: Request) {
 
     const genAI = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY });
     const response = await genAI.models.generateContent({
-      model: "gemini-2.5-pro",
+      model: "gemini-2.5-flash",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
     });
 
@@ -159,7 +195,35 @@ export async function POST(req: Request) {
 
     const routeData = JSON.parse(cleanText);
 
-    return NextResponse.json({ route: routeData });
+    const normalizedStops = Array.isArray(routeData.stops)
+      ? routeData.stops.map((stop: any) => {
+          const lookup =
+            stop.type === "pickup"
+              ? findMatchingEntity(stop, candidates)
+              : findMatchingEntity(stop, dropoffs);
+
+          return {
+            ...stop,
+            contactPhone:
+              stop.contactPhone ||
+              lookup?.contactPhone ||
+              undefined,
+            sourceId:
+              stop.sourceId ||
+              lookup?.id ||
+              lookup?.uid ||
+              undefined,
+          };
+        })
+      : [];
+
+    const normalizedRoute = {
+      ...routeData,
+      origin: routeData.origin ?? { lat, lng },
+      stops: normalizedStops,
+    };
+
+    return NextResponse.json({ route: normalizedRoute });
   } catch (error: any) {
     console.error("Smart Route Error:", error);
     return NextResponse.json(
@@ -167,4 +231,26 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
+}
+
+type Point = { location: { lat: number; lng: number }; contactPhone?: string; id?: string; uid?: string };
+
+function findMatchingEntity(
+  stop: { location?: { lat: number; lng: number } },
+  entities: Point[]
+) {
+  if (!stop.location) return null;
+  const { lat, lng } = stop.location;
+  return (
+    entities.find((entity) => isClose(entity.location, { lat, lng })) ?? null
+  );
+}
+
+function isClose(
+  a?: { lat: number; lng: number },
+  b?: { lat: number; lng: number }
+) {
+  if (!a || !b) return false;
+  const threshold = 0.0005; // ~50m
+  return Math.abs(a.lat - b.lat) < threshold && Math.abs(a.lng - b.lng) < threshold;
 }
