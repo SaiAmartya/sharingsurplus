@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { auth, db } from "@/lib/firebase";
-import { collection, addDoc, getDocs, query, where, Timestamp, onSnapshot } from "firebase/firestore";
+import { collection, addDoc, getDocs, query, where, Timestamp, onSnapshot, updateDoc, doc } from "firebase/firestore";
 import { getDistanceFromLatLonInKm } from "@/lib/location";
 import { getUserProfile } from "@/lib/auth-helpers";
 import { UserProfile, UrgentRequest } from "@/types/schema";
@@ -38,6 +38,17 @@ export default function CharityDashboard() {
 
     return () => unsubscribe();
   }, [user]);
+
+  const handleMarkReceived = async (requestId: string) => {
+    try {
+      await updateDoc(doc(db, "requests", requestId), {
+        status: 'fulfilled'
+      });
+    } catch (error) {
+      console.error("Error marking request as received:", error);
+      alert("Failed to update status");
+    }
+  };
 
   return (
     <>
@@ -108,7 +119,17 @@ export default function CharityDashboard() {
                               <p className="text-xs text-slate-400">Bringing: {req.item}</p>
                           </div>
                       </div>
-                      <span className="text-nb-teal font-bold text-sm">ACCEPTED</span>
+                      <div className="flex items-center gap-4">
+                        <span className="text-nb-teal font-bold text-xs tracking-wider hidden sm:block">ACCEPTED</span>
+                        <button 
+                            onClick={() => handleMarkReceived(req.id!)}
+                            className="bg-white/10 hover:bg-nb-teal hover:text-nb-ink text-white px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 group"
+                            title="Confirm delivery"
+                        >
+                            <i className="fas fa-check group-hover:scale-110 transition-transform"></i>
+                            Received
+                        </button>
+                      </div>
                   </div>
                 ))
               ) : (

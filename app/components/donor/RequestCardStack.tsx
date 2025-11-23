@@ -15,6 +15,7 @@ export default function RequestCardStack({ requests, onAccept, onDismiss }: Requ
   const [dragX, setDragX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
+  const [exitDirection, setExitDirection] = useState<'left' | 'right' | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -61,15 +62,25 @@ export default function RequestCardStack({ requests, onAccept, onDismiss }: Requ
 
     if (dragX > threshold) {
       // Swipe Right - Accept
-      onAccept(currentRequest);
-      setCurrentIndex(prev => prev + 1);
+      setExitDirection('right');
+      setTimeout(() => {
+        onAccept(currentRequest);
+        setCurrentIndex(prev => prev + 1);
+        setExitDirection(null);
+        setDragX(0);
+      }, 300);
     } else if (dragX < -threshold) {
       // Swipe Left - Dismiss
-      onDismiss(currentRequest);
-      setCurrentIndex(prev => prev + 1);
+      setExitDirection('left');
+      setTimeout(() => {
+        onDismiss(currentRequest);
+        setCurrentIndex(prev => prev + 1);
+        setExitDirection(null);
+        setDragX(0);
+      }, 300);
+    } else {
+      setDragX(0);
     }
-    
-    setDragX(0);
   };
 
   const getCardStyle = (index: number, isTop: boolean) => {
@@ -78,6 +89,17 @@ export default function RequestCardStack({ requests, onAccept, onDismiss }: Requ
         transform: `scale(${1 - index * 0.05}) translateY(${index * 10}px)`,
         zIndex: 10 - index,
         opacity: 1 - index * 0.3,
+      };
+    }
+
+    if (exitDirection) {
+      const xOffset = exitDirection === 'right' ? 1000 : -1000;
+      const rotation = exitDirection === 'right' ? 20 : -20;
+      return {
+        transform: `translateX(${xOffset}px) rotate(${rotation}deg)`,
+        zIndex: 20,
+        opacity: 0,
+        transition: 'transform 0.3s ease-out, opacity 0.3s ease-out',
       };
     }
 
@@ -136,7 +158,7 @@ export default function RequestCardStack({ requests, onAccept, onDismiss }: Requ
       {/* Current Card (Top) */}
       <div
         ref={cardRef}
-        className={`absolute w-full h-full rounded-3xl p-6 shadow-xl border border-slate-100 bg-white flex flex-col justify-between select-none touch-none ${getUrgencyBg(currentRequest.urgency)}`}
+        className={`absolute w-full h-full rounded-3xl p-6 shadow-xl border border-slate-100 flex flex-col justify-between select-none touch-none ${getUrgencyBg(currentRequest.urgency)}`}
         style={getCardStyle(0, true)}
         onMouseDown={handleDragStart}
         onMouseMove={handleDragMove}
@@ -196,22 +218,6 @@ export default function RequestCardStack({ requests, onAccept, onDismiss }: Requ
              Swipe to decide
            </div>
         </div>
-      </div>
-      
-      {/* Controls for non-touch */}
-      <div className="absolute -bottom-20 flex gap-4">
-        <button 
-          onClick={() => { setDragX(-200); setTimeout(handleDragEnd, 100); }}
-          className="w-14 h-14 bg-white rounded-full shadow-lg text-nb-red flex items-center justify-center hover:bg-red-50 transition-colors"
-        >
-          <i className="fas fa-times text-xl"></i>
-        </button>
-        <button 
-          onClick={() => { setDragX(200); setTimeout(handleDragEnd, 100); }}
-          className="w-14 h-14 bg-nb-ink rounded-full shadow-lg text-nb-teal flex items-center justify-center hover:bg-slate-800 transition-colors"
-        >
-          <i className="fas fa-check text-xl"></i>
-        </button>
       </div>
     </div>
   );
