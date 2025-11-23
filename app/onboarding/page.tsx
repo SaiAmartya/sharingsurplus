@@ -6,11 +6,12 @@ import { doc, setDoc, onSnapshot, serverTimestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { User } from "firebase/auth";
 import { getRoleRoute } from "@/lib/routes";
+import AddressAutocomplete from "@/components/AddressAutocomplete";
 
 /**
  * Supported question types in the onboarding flow
  */
-type QuestionType = 'text' | 'select' | 'multiselect' | 'role-select';
+type QuestionType = 'text' | 'select' | 'multiselect' | 'role-select' | 'address';
 
 /**
  * Defines a single question in the onboarding flow
@@ -36,7 +37,7 @@ export default function Onboarding() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
-  const [formData, setFormData] = useState<Record<string, string | string[]>>({});
+  const [formData, setFormData] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -95,7 +96,7 @@ export default function Onboarding() {
         },
         {
           id: 'pickupAddress',
-          type: 'text',
+          type: 'address',
           question: 'Where should volunteers go for pickups?',
           placeholder: 'Full address including unit number'
         },
@@ -122,7 +123,7 @@ export default function Onboarding() {
         },
         {
           id: 'baseLocation',
-          type: 'text',
+          type: 'address',
           question: 'What city or area are you based in?',
           placeholder: 'e.g. Mississauga, Downtown Toronto'
         },
@@ -147,7 +148,7 @@ export default function Onboarding() {
         },
         {
           id: 'dropoffAddress',
-          type: 'text',
+          type: 'address',
           question: 'Where should donations be delivered?',
           placeholder: 'Full address'
         },
@@ -326,6 +327,22 @@ export default function Onboarding() {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && formData[currentQ.id]) handleNext();
                 }}
+              />
+            )}
+
+            {/* Address Input */}
+            {currentQ.type === 'address' && (
+              <AddressAutocomplete
+                value={(formData[currentQ.id] as string) || ''}
+                onChange={(val, lat, lng) => {
+                  const updates: any = { [currentQ.id]: val };
+                  if (lat && lng) {
+                    updates.location = { lat, lng, address: val };
+                  }
+                  setFormData(prev => ({ ...prev, ...updates }));
+                }}
+                placeholder={currentQ.placeholder}
+                className="w-full text-2xl p-4 border-b-2 border-slate-300 focus:border-nb-ink bg-transparent outline-none transition-colors placeholder:text-slate-300"
               />
             )}
 
