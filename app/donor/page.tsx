@@ -4,9 +4,10 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { auth, db } from "@/lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { collection, query, where, onSnapshot, orderBy } from "firebase/firestore";
-import { Donation, UserProfile } from "@/types/schema";
+import { collection, query, where, onSnapshot, updateDoc, doc, Timestamp } from "firebase/firestore";
+import { Donation, UserProfile, UrgentRequest } from "@/types/schema";
 import DonationCard from "@/components/donor/DonationCard";
+import RequestCardStack from "@/app/components/donor/RequestCardStack";
 import { getUserProfile } from "@/lib/auth-helpers";
 
 export default function DonorDashboard() {
@@ -14,6 +15,8 @@ export default function DonorDashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [myDonations, setMyDonations] = useState<Donation[]>([]);
+  const [urgentRequests, setUrgentRequests] = useState<UrgentRequest[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<UrgentRequest[]>([]);
   const [loadingDonations, setLoadingDonations] = useState(true);
 
   useEffect(() => {
@@ -26,6 +29,54 @@ export default function DonorDashboard() {
     });
     return () => unsubscribeAuth();
   }, []);
+
+  // Fetch Urgent Requests
+  useEffect(() => {
+    const q = query(
+      collection(db, "requests"),
+      where("status", "==", "open")
+    );
+
+    const unsubscribeRequests = onSnapshot(q, (snapshot) => {
+      const requests = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as UrgentRequest[];
+      
+      // Sort client-side to avoid Firestore composite index requirement
+      requests.sort((a, b) => {
+        const timeA = a.createdAt?.seconds || 0;
+        const timeB = b.createdAt?.seconds || 0;
+        return timeB - timeA;
+      });
+
+      setUrgentRequests(requests);
+    });
+
+    return () => unsubscribeRequests();
+  }, []);
+
+  // Fetch Pending Requests (Accepted by me)
+  useEffect(() => {
+    if (!user) return;
+
+    const q = query(
+      collection(db, "requests"),
+      where("acceptedBy", "==", user.uid),
+      where("status", "==", "accepted")
+    );
+
+    const unsubscribePending = onSnapshot(q, (snapshot) => {
+      const requests = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as UrgentRequest[];
+      
+      setPendingRequests(requests);
+    });
+
+    return () => unsubscribePending();
+  }, [user]);
 
   useEffect(() => {
     if (user && userProfile) {
@@ -61,6 +112,28 @@ export default function DonorDashboard() {
     }
   }, [user, userProfile]);
 
+  const handleAcceptRequest = async (request: UrgentRequest) => {
+    if (!user || !request.id) return;
+
+    try {
+      await updateDoc(doc(db, "requests", request.id), {
+        status: 'accepted',
+        acceptedBy: user.uid,
+        acceptedByName: userProfile?.displayName || user.displayName || 'Anonymous Donor',
+        acceptedAt: Timestamp.now()
+      });
+    } catch (error) {
+      console.error("Error accepting request:", error);
+      alert("Failed to accept request. Please try again.");
+    }
+  };
+
+  const handleDismissRequest = (request: UrgentRequest) => {
+    // RequestCardStack handles local hiding, so we don't need to do anything here
+    // unless we want to persist the dismissal to a user preference/collection
+    console.log("Dismissed:", request.id);
+  };
+
   return (
     <div className="pb-32 pt-12 px-6 max-w-lg mx-auto">
       {/* Header */}
@@ -92,7 +165,7 @@ export default function DonorDashboard() {
               activeTab === 'myitems' ? 'bg-nb-ink text-white shadow-md' : 'text-slate-500 hover:text-nb-blue'
             }`}
           >
-            My Listings ({myDonations.length})
+            My Activity
           </button>
         </div>
       </div>
@@ -101,55 +174,60 @@ export default function DonorDashboard() {
       <div className="space-y-6">
         {activeTab === 'nearby' ? (
           <>
-             {/* Urgent Card */}
-            <div className="bg-nb-red-soft rounded-3xl p-6 relative overflow-hidden group cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02]">
-                <div className="absolute -right-6 -top-6 w-32 h-32 bg-nb-red/20 rounded-full group-hover:scale-110 transition-transform"></div>
-                
-                <div className="flex items-start justify-between relative z-10">
-                    <span className="bg-white text-nb-red px-3 py-1.5 rounded-full text-xs font-bold shadow-sm tracking-wide">URGENT • 2km</span>
-                    <span className="bg-white/60 w-10 h-10 flex items-center justify-center rounded-full text-nb-red shadow-sm"><i className="fas fa-arrow-right"></i></span>
-                </div>
-                
-                <div className="mt-6 relative z-10">
-                    <h3 className="font-display text-2xl font-bold text-rose-900">Canned Beans</h3>
-                    <p className="text-rose-900/70 text-sm mt-1 font-medium">St. Mary's Food Bank</p>
-                    <div className="mt-4 inline-flex items-center text-rose-900/80 text-xs font-bold bg-white/40 px-3 py-1 rounded-full">
-                        <i className="far fa-clock mr-2"></i> Needed by 4 PM
-                    </div>
-                </div>
-            </div>
-
-            {/* Regular Need Card */}
-            <div className="nb-card p-1.5 flex items-stretch">
-                <div className="w-24 bg-nb-teal-soft rounded-2xl flex items-center justify-center shrink-0">
-                    <i className="fas fa-baby-carriage text-3xl text-nb-teal"></i>
-                </div>
-                <div className="p-4 flex-1">
-                    <h3 className="font-display text-lg font-bold text-nb-ink">Baby Formula</h3>
-                    <p className="text-slate-500 text-sm">North York Harvest</p>
-                    <div className="mt-3 flex justify-between items-center">
-                        <span className="text-xs font-bold text-nb-orange bg-nb-orange-soft px-2.5 py-1 rounded-lg">High Demand</span>
-                    </div>
-                </div>
+            {/* Urgent Requests Stack */}
+            <div className="mb-8">
+              <RequestCardStack 
+                requests={urgentRequests} 
+                onAccept={handleAcceptRequest}
+                onDismiss={handleDismissRequest}
+              />
             </div>
           </>
         ) : (
-          <div className="space-y-4">
-            {loadingDonations ? (
-              <div className="text-center py-8">
-                <i className="fas fa-spinner fa-spin text-3xl text-nb-blue mb-4"></i>
-                <p className="text-slate-500">Loading your donations...</p>
-            </div>
-            ) : myDonations.length > 0 ? (
-              myDonations.map((donation) => (
-                <DonationCard key={donation.id} donation={donation} />
-              ))
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-slate-500">You haven't posted any donations yet.</p>
-                <Link href="/donor/create" className="mt-4 inline-block text-nb-blue hover:underline">Create a new donation</Link>
+          <div className="space-y-8">
+            {/* Pending Requests Section */}
+            {pendingRequests.length > 0 && (
+              <div>
+                <h3 className="font-display text-xl font-bold text-nb-ink mb-4">Pending Deliveries</h3>
+                <div className="space-y-3">
+                  {pendingRequests.map(req => (
+                    <div key={req.id} className="bg-white border border-slate-100 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+                      <div>
+                        <h4 className="font-bold text-nb-ink">
+                          {req.item}
+                          {req.quantity && <span className="text-slate-500 font-normal text-sm ml-2">({req.quantity})</span>}
+                        </h4>
+                        <p className="text-xs text-slate-400">For: {req.foodBankName || 'Food Bank'}</p>
+                      </div>
+                      <span className="px-3 py-1 bg-nb-teal-soft text-nb-teal text-xs font-bold rounded-full">
+                        Accepted
+                      </span>
+                    </div>
+                  ))}
                 </div>
+              </div>
             )}
+
+            <div>
+              <h3 className="font-display text-xl font-bold text-nb-ink mb-4">My Listings</h3>
+              {loadingDonations ? (
+                <div className="text-center py-8">
+                  <i className="fas fa-spinner fa-spin text-3xl text-nb-blue mb-4"></i>
+                  <p className="text-slate-500">Loading your donations...</p>
+              </div>
+              ) : myDonations.length > 0 ? (
+                <div className="space-y-4">
+                  {myDonations.map((donation) => (
+                    <DonationCard key={donation.id} donation={donation} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
+                  <p className="text-slate-400">You haven't posted any donations yet.</p>
+                  <Link href="/donor/create" className="mt-4 inline-block text-nb-blue hover:underline font-bold">Create a new donation</Link>
+                  </div>
+              )}
+            </div>
           </div>
         )}
       </div>

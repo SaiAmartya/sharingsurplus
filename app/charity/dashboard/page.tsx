@@ -1,8 +1,64 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { auth, db } from "@/lib/firebase";
+import { collection, addDoc, getDocs, query, where, Timestamp, onSnapshot, updateDoc, doc } from "firebase/firestore";
+import { getDistanceFromLatLonInKm } from "@/lib/location";
+import { getUserProfile } from "@/lib/auth-helpers";
+import { UserProfile, UrgentRequest } from "@/types/schema";
+import { onAuthStateChanged } from "firebase/auth";
+
 export default function CharityDashboard() {
+  const [incomingRequests, setIncomingRequests] = useState<UrgentRequest[]>([]);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribeAuth();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const q = query(
+      collection(db, "requests"),
+      where("foodBankId", "==", user.uid),
+      where("status", "==", "accepted")
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const requests = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as UrgentRequest[];
+      setIncomingRequests(requests);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  const handleMarkReceived = async (requestId: string) => {
+    try {
+      await updateDoc(doc(db, "requests", requestId), {
+        status: 'fulfilled'
+      });
+    } catch (error) {
+      console.error("Error marking request as received:", error);
+      alert("Failed to update status");
+    }
+  };
+
   return (
     <>
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="font-display text-3xl font-bold text-nb-ink">Dashboard</h1>
+      </div>
+
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="nb-card p-6 flex flex-col justify-between h-40">
               <div className="w-10 h-10 bg-nb-blue-soft rounded-full flex items-center justify-center text-nb-blue mb-4">
                   <i className="fas fa-weight-hanging"></i>
@@ -42,7 +98,7 @@ export default function CharityDashboard() {
       </div>
 
       {/* Incoming Ticker */}
-      <div className="bg-nb-ink rounded-3xl p-8 text-white shadow-float relative overflow-hidden">
+      <div className="bg-nb-ink rounded-3xl p-8 text-white shadow-float relative overflow-hidden mb-8">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-16 -mt-16 pointer-events-none"></div>
           
           <div className="flex justify-between items-end mb-6 relative z-10">
@@ -51,26 +107,36 @@ export default function CharityDashboard() {
           </div>
           
           <div className="space-y-4 relative z-10">
-              <div className="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/5">
-                  <div className="flex items-center">
-                      <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center font-bold mr-4">S</div>
-                      <div>
-                          <p className="font-bold text-sm">Truck #402 (Sarah)</p>
-                          <p className="text-xs text-slate-400">Walmart Dairy • 3 Pallets</p>
+              {incomingRequests.length > 0 ? (
+                incomingRequests.map(req => (
+                  <div key={req.id} className="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/5">
+                      <div className="flex items-center">
+                          <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center font-bold mr-4">
+                            {req.acceptedByName ? req.acceptedByName.charAt(0) : 'D'}
+                          </div>
+                          <div>
+                              <p className="font-bold text-sm">{req.acceptedByName || 'Anonymous Donor'}</p>
+                              <p className="text-xs text-slate-400">Bringing: {req.item}</p>
+                          </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className="text-nb-teal font-bold text-xs tracking-wider hidden sm:block">ACCEPTED</span>
+                        <button 
+                            onClick={() => handleMarkReceived(req.id!)}
+                            className="bg-white/10 hover:bg-nb-teal hover:text-nb-ink text-white px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 group"
+                            title="Confirm delivery"
+                        >
+                            <i className="fas fa-check group-hover:scale-110 transition-transform"></i>
+                            Received
+                        </button>
                       </div>
                   </div>
-                  <span className="text-nb-orange font-bold text-sm">ETA 10 MIN</span>
-              </div>
-                <div className="flex items-center justify-between bg-white/5 p-4 rounded-2xl border border-white/5">
-                  <div className="flex items-center">
-                      <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center font-bold mr-4">M</div>
-                      <div>
-                          <p className="font-bold text-sm">Truck #112 (Mike)</p>
-                          <p className="text-xs text-slate-400">Farm A Roots • 12 Boxes</p>
-                      </div>
-                  </div>
-                  <span className="text-nb-teal font-bold text-sm">ARRIVED</span>
-              </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-slate-500">
+                  <p>No incoming deliveries at the moment.</p>
+                </div>
+              )}
           </div>
       </div>
     </>

@@ -27,6 +27,14 @@ service cloud.firestore {
       allow create: if isSignedIn() && isOwner(userId);
       allow update: if isSignedIn() && isOwner(userId);
       allow delete: if isSignedIn() && isOwner(userId);
+
+      // Requests subcollection (Foodbank requests)
+      match /requests/{requestId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn() && hasRole('foodbank');
+        allow update: if isSignedIn() && (isOwner(userId) || hasRole('foodbank'));
+        allow delete: if isSignedIn() && hasRole('foodbank');
+      }
     }
 
     // Donations collection
@@ -55,7 +63,11 @@ service cloud.firestore {
     match /requests/{requestId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn() && hasRole('foodbank');
-      allow update: if isSignedIn() && (resource.data.foodBankId == request.auth.uid || hasRole('donor'));
+      allow update: if isSignedIn() && (
+        resource.data.foodBankId == request.auth.uid || 
+        hasRole('donor') ||
+        (request.resource.data.status == 'accepted' && request.resource.data.acceptedBy == request.auth.uid)
+      );
       allow delete: if isSignedIn() && resource.data.foodBankId == request.auth.uid;
     }
 

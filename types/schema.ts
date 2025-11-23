@@ -54,10 +54,20 @@ export interface Donation {
 export interface UrgentRequest {
   id?: string;
   foodBankId: string;
+  foodBankName?: string;
   item: string;
+  quantity?: string;
+  details?: string;
   urgency: 'high' | 'medium' | 'low';
-  status: 'open' | 'fulfilled';
+  status: 'open' | 'accepted' | 'fulfilled';
   createdAt: Timestamp;
+  acceptedBy?: string;
+  acceptedByName?: string;
+  acceptedAt?: Timestamp;
+  location?: {
+    lat: number;
+    lng: number;
+  };
 }
 
 export interface InventoryItem {
