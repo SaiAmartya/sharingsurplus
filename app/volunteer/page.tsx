@@ -202,7 +202,7 @@ export default function VolunteerRoutes() {
                     <div className="relative pl-4 border-l-2 border-slate-100 space-y-8 mb-8 ml-2">
                         {route.stops.map((stop, idx) => (
                              <div key={`${stop.name}-${idx}`} className="relative space-y-1">
-                                <div className={`absolute -left-[23px] top-1 w-5 h-5 ${stop.type === 'pickup' ? 'bg-white border-4 border-nb-ink' : 'bg-nb-ink'} rounded-full ${stop.type === 'dropoff' ? 'shadow-sm' : ''}`}></div>
+                                <div className={`absolute -left-[27px] top-1 w-5 h-5 ${stop.type === 'pickup' ? 'bg-white border-4 border-nb-ink' : 'bg-nb-ink'} rounded-full ${stop.type === 'dropoff' ? 'shadow-sm' : ''}`}></div>
                                 <div>
                                     <h4 className="font-bold text-nb-ink text-lg">{stop.name}</h4>
                                     <p className="text-sm text-slate-500">{stop.description}</p>
